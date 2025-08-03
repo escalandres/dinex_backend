@@ -1,0 +1,23 @@
+{
+  "name": "dinex",
+  "version": "1.0.0",
+  "description": "Aplicacion personal",
+  "homepage": "https://github.com/escalandres/dinex#readme",
+  "bugs": {
+    "url": "https://github.com/escalandres/dinex/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/escalandres/dinex.git"
+  },
+  "license": "ISC",
+  "author": "escalandres",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.15.10"
+  }
+}
