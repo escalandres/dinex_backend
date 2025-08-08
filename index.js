@@ -17,8 +17,8 @@ import dotenv from 'dotenv';
 // -------------- Variables modules --------------
 const app = express();
 
-dotenv.config();
-
+// dotenv.config();
+process.loadEnvFile();
 
 // -------------- Variables Globales --------------
 // Obtiene la URL del archivo actual
