@@ -10,7 +10,7 @@ export async function crearAhorro(ahorroData) {
             ahorroData.id_usuario,        // id_usuario
             ahorroData.id_instrumento,    // id_instrumento
             ahorroData.nombre,            // nombre
-            ahorroData.tipo,              // tipo
+            ahorroData.tipo,              // tipo: congelado, apartado, inversion
             ahorroData.plazo_dias,       // plazo_dias
             ahorroData.monto,              // monto
             Date.now()                     // fecha_creacion
