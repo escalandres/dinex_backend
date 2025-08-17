@@ -2,18 +2,18 @@
 import path from 'path';
 import cors from 'cors';
 import express from 'express';
-import cookieParser from 'cookie-parser';
 
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
 // -------------- My modules --------------
 import userRoutes from './routes/user.js';
-import appRoutes from './routes/app.js';
-import trackerRoutes from './routes/tracker.js';
-import shipmentRoutes from './routes/shipment.js';
-import sendMail from './controllers/modules/nodemailer.js';
-import dotenv from 'dotenv';
+// import appRoutes from './routes/app.js';
+// import trackerRoutes from './routes/tracker.js';
+// import shipmentRoutes from './routes/shipment.js';
+// import sendMail from './controllers/modules/nodemailer.js';
+import inversionesRoute from './routes/inversiones.js';
+// import dotenv from 'dotenv';
 // -------------- Variables modules --------------
 const app = express();
 
@@ -53,20 +53,21 @@ app.get('/test', (req, res) => {
 });
 
 app.use('/user', userRoutes);
-app.use('/app', appRoutes);
+app.use('/inversiones', inversionesRoute);
+// app.use('/app', appRoutes);
 
-app.use('/api/tracker', trackerRoutes);
-app.use('/api/shipment', shipmentRoutes);
+// app.use('/api/tracker', trackerRoutes);
+// app.use('/api/shipment', shipmentRoutes);
 
-app.post('/sendmail', async (req, res) => {
-    const { to, subject, text } = req.body;
-    try {
-        let info = await sendMail(to, subject, text);
-        res.status(200).send(`Email sent: ${info}`);
-    } catch (error) {
-        res.status(500).send("Error sending email");
-    }
-});
+// app.post('/sendmail', async (req, res) => {
+//     const { to, subject, text } = req.body;
+//     try {
+//         let info = await sendMail(to, subject, text);
+//         res.status(200).send(`Email sent: ${info}`);
+//     } catch (error) {
+//         res.status(500).send("Error sending email");
+//     }
+// });
 
 app.listen(process.env.PORT, () => console.log(`App running on http://localhost:${process.env.PORT}`))
 
