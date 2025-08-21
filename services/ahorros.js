@@ -3,13 +3,13 @@ import db from '../db.js';
 export async function crearAhorro(ahorroData) {
     await db.execute({
         sql: `
-        INSERT INTO ahorros (id_usuario, id_instrumento, nombre, fecha, tipo, plazo_dias, monto, fecha_creacion)
+        INSERT INTO ahorros (id_usuario, id_instrumento, descripcion, fecha, tipo, plazo_dias, monto, fecha_creacion)
         VALUES (?, ?, ?, ?, ?, ?, ?)
         `,
         args: [
             ahorroData.id_usuario,        // id_usuario
             ahorroData.id_instrumento,    // id_instrumento
-            ahorroData.nombre,            // nombre
+            ahorroData.descripcion,            // descripcion
             ahorroData.tipo,              // tipo: congelado, apartado, inversion
             ahorroData.plazo_dias,       // plazo_dias
             ahorroData.monto,              // monto
@@ -26,11 +26,11 @@ export async function obtenerAhorrosPorUsuario(idUsuario) {
 export async function actualizarAhorro(ahorroData) {
     await db.execute({
         sql: `
-        UPDATE ahorros SET nombre = ?, monto = ?
+        UPDATE ahorros SET descripcion = ?, monto = ?
         WHERE id = ?
         `,
         args: [
-            ahorroData.nombre,            // nombre
+            ahorroData.descripcion,            // descripcion
             ahorroData.monto,              // monto
             ahorroData.id                  // id
         ]

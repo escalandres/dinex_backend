@@ -1,4 +1,6 @@
 
+import { formatearFecha } from "./modules/utils.mjs";
+
 export async function obtenerPrecioExacto(req,res) {
     const { symbol, fecha } = req.query;
 
@@ -10,7 +12,7 @@ export async function obtenerPrecioExacto(req,res) {
     const fechaCDMX = new Date(fecha);
     const offsetCDT = 5 * 60 * 60 * 1000; // UTC-5 en agosto
     const fechaUTC = new Date(fechaCDMX.getTime() + offsetCDT);
-
+    const formattedDate = formatearFecha(fechaCDMX);
     // Paso 2: Obtener timestamps UNIX
     const timestampInicio = Math.floor(fechaUTC.getTime() / 1000);
     const timestampFin = timestampInicio + 900; // 15 minutos de margen
@@ -33,21 +35,13 @@ export async function obtenerPrecioExacto(req,res) {
 
         console.log("quote", result.indicators?.quote);
 
-        const precios = result.meta.chartPreviousClose ? [result.meta.chartPreviousClose] : result.indicators?.quote?.[0]?.close;
-        // const precios = result.indicators?.quote?.[0]?.close;
+        const longName = result.meta.longName;
+        const precios = result.meta.chartPreviousClose;
 
-        // const indice = timestamps.findIndex(t => t === timestampInicio);
-        // if (indice === -1 || !precios[indice]) {
-        // throw new Error("No hay precio exacto para ese minuto");
-        // }
-
-        console.log(`Precio de ${symbol} el ${fechaCDMX.toISOString()} fue de ${precios} USD`);
+        console.log(`Precio de la acción de ${longName} - ${symbol} el ${formattedDate} fue de ${precios} USD`);
 
         return res.status(200).json({
-            simbolo: symbol,
-            fechaLocal: fecha,
-            fechaUTC: fechaUTC.toISOString(),
-            precio: precios
+            result: `Precio de la acción de ${longName} - ${symbol} el ${formattedDate} fue de ${precios} USD`
         });
     } catch (error) {
         console.error("Error al obtener precio:", error);

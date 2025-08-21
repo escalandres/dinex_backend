@@ -3,13 +3,13 @@ import db from '../db.js';
 export async function crearGasto(GastoData) {
     await db.execute({
         sql: `
-        INSERT INTO Gastos (id_usuario, id_instrumento, nombre, fecha, tipo, plazo_dias, monto, fecha_creacion)
+        INSERT INTO Gastos (id_usuario, id_instrumento, descripcion, fecha, tipo, plazo_dias, monto, fecha_creacion)
         VALUES (?, ?, ?, ?, ?, ?, ?)
         `,
         args: [
             GastoData.id_usuario,        // id_usuario
             GastoData.id_instrumento,    // id_instrumento
-            GastoData.nombre,            // nombre
+            GastoData.descripcion,            // descripcion
             GastoData.tipo,              // tipo
             GastoData.plazo_dias,       // plazo_dias
             GastoData.monto,              // monto
@@ -26,11 +26,11 @@ export async function obtenerGastosPorUsuario(idUsuario) {
 export async function actualizarGasto(GastoData) {
     await db.execute({
         sql: `
-        UPDATE Gastos SET nombre = ?, monto = ?
+        UPDATE Gastos SET descripcion = ?, monto = ?
         WHERE id = ?
         `,
         args: [
-            GastoData.nombre,            // nombre
+            GastoData.descripcion,            // descripcion
             GastoData.monto,              // monto
             GastoData.id                  // id
         ]
