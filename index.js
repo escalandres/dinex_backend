@@ -42,8 +42,46 @@ app.get('/', (req, res) => {
 
 
 app.get('/test', (req, res) => {
+    let paises = [
+        {
+            "id": 1,
+            "nombre": "México",
+            "codigo_iso": "MX",
+            "moneda_local": "Peso mexicano",
+            "simbolo_moneda": "$",
+            "formato_moneda": "$#,##0.00",
+            "emoji_bandera": "🇲🇽"
+        },
+        {
+            "id": 2,
+            "nombre": "Estados Unidos",
+            "codigo_iso": "US",
+            "moneda_local": "Dólar estadounidense",
+            "simbolo_moneda": "$",
+            "formato_moneda": "$#,##0.00",
+            "emoji_bandera": "🇺🇸"
+        },
+        {
+            "id": 3,
+            "nombre": "Japón",
+            "codigo_iso": "JP",
+            "moneda_local": "Yen japonés",
+            "simbolo_moneda": "¥",
+            "formato_moneda": "¥#,##0",
+            "emoji_bandera": "🇯🇵"
+        },
+        {
+            "id": 4,
+            "nombre": "España",
+            "codigo_iso": "ES",
+            "moneda_local": "Euro",
+            "simbolo_moneda": "€",
+            "formato_moneda": "€#,##0.00",
+            "emoji_bandera": "🇪🇸"
+        }
+        ]
     console.log(`Port: ${process.env.PORT}`)
-    res.send('Hola mundo');
+    res.status(200).json({ paises });
 });
 
 app.use('/user', userRoutes);

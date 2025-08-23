@@ -1,0 +1,210 @@
+Table gastos [headercolor: #d42815] {
+	id integer [ pk, increment, not null, unique ]
+	usuario_id integer
+	concepto text(65535) [ not null ]
+	id_instrumento integer [ not null ]
+	frecuencia integer [ not null ]
+	tipo_gasto integer
+	monto numeric [ not null ]
+	plazo integer [ default: 0 ]
+	fecha_aplicacion text(65535)
+	fecha_registro text(65535)
+	comentario text(65535) [ default: '''''' ]
+	categoria integer
+}
+
+Table usuarios [headercolor: #175e7a] {
+	id integer [ pk, increment, not null, unique ]
+	email text(65535) [ not null, unique ]
+	nombre text(65535) [ not null ]
+	apellido text(65535) [ not null ]
+	hashed_password text(65535) [ not null, default: '''''' ]
+	profile_picture text(65535) [ not null, default: '''''' ]
+	pais integer [ not null ]
+	oauth_provider text(65535) [ not null, default: '''''' ]
+	oauth_user_id text(65535) [ not null, default: '''''' ]
+	email_verified boolean [ not null ]
+	created_date text(65535) [ not null ]
+	last_login text(65535) [ not null ]
+
+	indexes {
+		(email) [ name: 'usuarios_index_0' ]
+	}
+}
+
+Table instrumentos [headercolor: #9610e3] {
+	id integer [ pk, increment, not null, unique ]
+	usuario_id integer [ not null ]
+	descripcion text(65535) [ not null ]
+	tipo integer [ not null ]
+	subtipo integer [ not null ]
+	dia_corte integer [ not null ]
+	dia_limite_pago integer [ not null ]
+}
+
+Table codigos_otp [headercolor: #2a2cbd] {
+	id integer [ pk, increment, not null, unique ]
+	usuario_id integer [ not null ]
+	codigo_opt text(65535) [ not null ]
+	fecha_creacion text(65535) [ not null, default: '(CURRENT_TIMESTAMP)' ]
+	fecha_expiracion text(65535) [ not null ]
+	usado boolean [ not null, default: false ]
+}
+
+Table cat_tipo_instrumentos [headercolor: #eb9010] {
+	id integer [ pk, increment, not null, unique ]
+	nombre text(65535) [ not null ]
+}
+
+Table cat_subtipo_instrumentos [headercolor: #65cc31] {
+	id integer [ pk, increment, not null, unique ]
+	nombre text(65535) [ not null ]
+}
+
+Table ahorros [headercolor: #1e7a17] {
+	id integer [ pk, increment, not null, unique ]
+	usuario_id integer [ not null ]
+	concepto text(65535) [ not null ]
+	id_instrumento integer [ not null ]
+	esta_congelado boolean [ default: false ]
+	plazo_dias integer [ not null ]
+	monto numeric [ not null ]
+	fecha_aplicacion text(65535) [ not null ]
+	fecha_registro text(65535) [ not null ]
+	tasa numeric [ not null ]
+	comentario text(65535) [ default: '''''' ]
+	composicion_year integer [ default: 360 ]
+}
+
+Table cat_tipos_gastos [headercolor: #7a1717] {
+	id integer [ pk, increment, not null, unique ]
+	descripcion integer
+}
+
+Table ingresos [headercolor: #1ccdd6] {
+	id integer [ pk, increment, not null, unique ]
+	usuario_id integer [ not null ]
+	es_fijo boolean [ not null, default: true ]
+	fuente integer [ not null ]
+	descripcion text(65535)
+	monto numeric [ not null ]
+	fecha_registro text(65535)
+	fecha_aplicacion text(65535)
+}
+
+Table cat_fuente_ingresos [headercolor: #e8f013] {
+	id integer [ pk, increment, not null, unique ]
+	fuente text(65535)
+}
+
+Table inversiones [headercolor: #75d943] {
+	id integer [ pk, increment, not null, unique ]
+	usuario_id integer
+	id_instrumento integer
+	tipo_inversion integer
+	monto_operacion numeric
+	moneda_operacion text(65535)
+	monto_local numeric
+	tipo_cambio_operacion numeric
+	fecha_inversion text(65535)
+	fecha_registro text(65535)
+}
+
+Table cat_tipo_inversiones [headercolor: #175e7a] {
+	id integer [ pk, increment, not null, unique ]
+	nombre text(65535) [ not null ]
+	categoria text(65535) [ not null ]
+	liquidez text(65535) [ not null ]
+	fiscal boolean [ not null, default: true ]
+	descripcion text(65535) [ not null ]
+}
+
+Table cat_frecuencia [headercolor: #175e7a] {
+	id integer [ pk, increment, not null, unique ]
+	descripcion text(65535)
+	frecuencia_dias integer
+}
+
+Table paises [headercolor: #175e7a] {
+	id integer [ pk, increment, not null, unique ]
+	nombre text(65535)
+	codigo_iso text(65535)
+	moneda_local text(65535)
+	simbolo_moneda text(65535)
+	formato_moneda text(65535)
+}
+
+Table cat_categoria_gastos [headercolor: #d918c2] {
+	id integer [ pk, increment, not null, unique ]
+	nombre text(65535)
+	tipo text(65535)
+	descripcion text(65535)
+}
+
+Ref fk_instrumentos_usuario_id_usuarios {
+	instrumentos.usuario_id - usuarios.id [ delete: no action, update: no action ]
+}
+
+Ref fk_codigos_otp_usuario_id_usuarios {
+	codigos_otp.usuario_id - usuarios.id [ delete: no action, update: no action ]
+}
+
+Ref fk_cat_tipos_instrumentos_id_instrumentos {
+	cat_tipo_instrumentos.id - instrumentos.tipo [ delete: no action, update: no action ]
+}
+
+Ref fk_cat_subtipos_instrumentos_id_instrumentos {
+	cat_subtipo_instrumentos.id - instrumentos.subtipo [ delete: no action, update: no action ]
+}
+
+Ref fk_ahorros_usuario_id_usuarios {
+	ahorros.usuario_id - usuarios.id [ delete: no action, update: no action ]
+}
+
+Ref fk_ahorros_id_instrumento_instrumentos {
+	ahorros.id_instrumento - instrumentos.id [ delete: no action, update: no action ]
+}
+
+Ref fk_cat_tipos_gastos_id_gastos {
+	cat_tipos_gastos.id - gastos.tipo_gasto [ delete: no action, update: no action ]
+}
+
+Ref fk_ingresos_usuario_id_usuarios {
+	ingresos.usuario_id - usuarios.id [ delete: no action, update: no action ]
+}
+
+Ref fk_ingresos_fuente_cat_fuente_ingresos {
+	ingresos.fuente - cat_fuente_ingresos.id [ delete: no action, update: no action ]
+}
+
+Ref fk_inversiones_tipo_inversion_cat_tipo_inversiones {
+	inversiones.tipo_inversion - cat_tipo_inversiones.id [ delete: no action, update: no action ]
+}
+
+Ref fk_usuarios_pais_paises {
+	usuarios.pais - paises.id [ delete: no action, update: no action ]
+}
+
+Ref fk_gastos_categoria_cat_frecuencia {
+	gastos.frecuencia - cat_frecuencia.id [ delete: no action, update: no action ]
+}
+
+Ref fk_gastos_categoria_cat_categoria_gastos {
+	gastos.categoria - cat_categoria_gastos.id [ delete: no action, update: no action ]
+}
+
+Ref fk_inversiones_usuario_id_usuarios {
+	inversiones.usuario_id - usuarios.id [ delete: no action, update: no action ]
+}
+
+Ref fk_inversiones_id_instrumento_instrumentos {
+	inversiones.id_instrumento - instrumentos.id [ delete: no action, update: no action ]
+}
+
+Ref fk_gastos_usuario_id_usuarios {
+	gastos.usuario_id - usuarios.id [ delete: no action, update: no action ]
+}
+
+Ref fk_gastos_id_instrumento_instrumentos {
+	gastos.id_instrumento - instrumentos.id [ delete: no action, update: no action ]
+}

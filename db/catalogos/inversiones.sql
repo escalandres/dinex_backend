@@ -1,0 +1,31 @@
+INSERT INTO cat_tipo_inversiones (nombre, categoria, liquidez, fiscal, descripcion) VALUES
+('CETES', 'deuda', 'alta', 1, 'Bonos gubernamentales de corto plazo'),
+('Bonos M', 'deuda', 'media', 1, 'Deuda gubernamental a mediano/largo plazo'),
+('Acciones', 'capital', 'alta', 1, 'Participación en empresas cotizadas'),
+('ETF', 'capital', 'alta', 1, 'Fondos cotizados diversificados'),
+('FIBRAS', 'capital', 'media', 1, 'Inversión en bienes raíces vía bolsa'),
+('Bienes raíces', 'real', 'baja', 1, 'Compra directa de propiedades'),
+('Criptomonedas', 'capital', 'alta', 0, 'Activos digitales descentralizados'),
+('Oro físico', 'real', 'baja', 0, 'Inversión en metales preciosos'),
+('Fondos mutuos', 'capital', 'media', 1, 'Fondos gestionados por profesionales');
+
+INSERT INTO cat_fuente_ingresos (fuente, tipo, descripcion) VALUES
+('Salario', 'fijo', 'Ingreso regular por empleo formal'),
+('Freelance', 'variable', 'Pagos por servicios independientes o proyectos'),
+('Renta', 'pasivo', 'Ingresos por alquiler de propiedades o activos'),
+('Intereses', 'pasivo', 'Rendimientos por depósitos, cuentas o instrumentos de deuda'),
+('Herencia', 'extraordinario', 'Transferencia de bienes o dinero por sucesión'),
+('Bonos', 'pasivo', 'Rendimientos por inversión en instrumentos de deuda'),
+('Horas extras', 'variable', 'Ingreso adicional por trabajo fuera del horario regular'),
+('Venta de activos', 'extraordinario', 'Ganancia por venta de bienes, propiedades o inversiones'),
+('Dividendos', 'pasivo', 'Distribución de utilidades por acciones o participaciones'),
+('Donación recibida', 'extraordinario', 'Transferencia voluntaria sin contraprestación'),
+('Royalties', 'pasivo', 'Ingresos por derechos de autor, patentes o licencias'),
+('Premio/Sorteo', 'extraordinario', 'Ganancia obtenida por azar o concursos'),
+('Subsidio/Beca', 'extraordinario', 'Apoyo económico por parte de instituciones públicas o privadas'),
+('Reembolso', 'neutral', 'Recuperación de gastos previamente realizados'),
+('Honorarios', 'variable', 'Pago por servicios profesionales independientes'),
+('Ganancia de capital', 'pasivo', 'Incremento en el valor de activos al momento de su venta'),
+('Cashback/Recompensa', 'neutral', 'Devolución parcial por compras o incentivos de consumo'),
+('Regalo', 'extraordinario', 'Bienes o dinero recibido sin obligación de retorno'),
+('Préstamo', 'neutral', 'Dinero recibido con obligación de devolución');
