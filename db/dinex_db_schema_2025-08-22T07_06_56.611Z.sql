@@ -143,6 +143,7 @@ CREATE TABLE IF NOT EXISTS "ahorros" (
 	"esta_congelado" BOOLEAN DEFAULT false,
 	"plazo_dias" INTEGER NOT NULL,
 	"monto" NUMERIC NOT NULL,
+	"moneda" TEXT NOT NULL,
 	"fecha_aplicacion" TEXT NOT NULL,
 	"fecha_registro" TEXT NOT NULL,
 	"tasa" NUMERIC NOT NULL,
