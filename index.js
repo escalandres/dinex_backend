@@ -9,6 +9,7 @@ import { dirname } from 'path';
 // -------------- My modules --------------
 import userRoutes from './routes/user.js';
 import inversionesRoute from './routes/inversiones.js';
+import instrumentosRoute from './routes/instrumentos.js';
 
 // -------------- Variables modules --------------
 const app = express();
@@ -86,7 +87,7 @@ app.get('/test', (req, res) => {
 
 app.use('/user', userRoutes);
 app.use('/inversiones', inversionesRoute);
-
+app.use('/instrumentos', instrumentosRoute);
 
 app.listen(process.env.PORT, () => console.log(`App running on http://localhost:${process.env.PORT}`))
 
