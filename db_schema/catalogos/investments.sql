@@ -1,4 +1,4 @@
-INSERT INTO cat_tipo_inversiones (nombre, categoria, liquidez, fiscal, descripcion) VALUES
+INSERT INTO investments_types_catalog (name, category, liquidity, is_fiscal, description) VALUES
 ('CETES', 'deuda', 'alta', 1, 'Bonos gubernamentales de corto plazo'),
 ('Bonos M', 'deuda', 'media', 1, 'Deuda gubernamental a mediano/largo plazo'),
 ('Acciones', 'capital', 'alta', 1, 'Participación en empresas cotizadas'),
@@ -9,7 +9,7 @@ INSERT INTO cat_tipo_inversiones (nombre, categoria, liquidez, fiscal, descripci
 ('Oro físico', 'real', 'baja', 0, 'Inversión en metales preciosos'),
 ('Fondos mutuos', 'capital', 'media', 1, 'Fondos gestionados por profesionales');
 
-INSERT INTO cat_fuente_ingresos (fuente, tipo, descripcion) VALUES
+INSERT INTO income_sources_catalog (source, type, description) VALUES
 ('Salario', 'fijo', 'Ingreso regular por empleo formal'),
 ('Freelance', 'variable', 'Pagos por servicios independientes o proyectos'),
 ('Renta', 'pasivo', 'Ingresos por alquiler de propiedades o activos'),

@@ -1,4 +1,4 @@
-INSERT INTO cat_categoria_gastos (nombre, tipo, descripcion) VALUES
+INSERT INTO expenses_categories_catalog (name, type, description) VALUES
 ('Casa', 'Fijo', 'Renta, mantenimiento, hipoteca'),
 ('Servicios', 'Fijo', 'Luz, agua, gas, internet'),
 ('Streaming', 'Fijo', 'Netflix, Spotify, Disney+, etc.'),
@@ -12,12 +12,12 @@ INSERT INTO cat_categoria_gastos (nombre, tipo, descripcion) VALUES
 ('Familia', 'Variable', 'Préstamo a familiares u amigos'),
 ('Otro', 'Variable', '');
 
-INSERT INTO cat_tipo_gastos (descripcion) VALUES
+INSERT INTO expenses_types_catalog (description) VALUES
 ('Único'),
 ('Fijo'),
 ('A meses');
 
-INSERT INTO cat_frecuencia (descripcion, frecuencia_dias) VALUES
+INSERT INTO frequency_catalog (description, frequency_days) VALUES
 ('Diario', 1),
 ('Semanal', 7),
 ('Quincenal', 15),

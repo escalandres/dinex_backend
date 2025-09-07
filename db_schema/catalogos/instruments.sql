@@ -1,9 +1,9 @@
-INSERT INTO cat_tipo_instrumentos (id, nombre) VALUES
+INSERT INTO instruments_types_catalog (id, name) VALUES
 (1, 'Ahorro'),
 (2, 'Gasto'),
 (3, 'Inversión');
 
-INSERT INTO cat_subtipo_instrumentos (id_tipo_instrumento, nombre) VALUES
+INSERT INTO instruments_subtypes_catalog (id_instrument_type, name) VALUES
 (1, 'Cuenta de ahorro'),
 (1, 'Cuenta corriente'),
 (1, 'Efectivo para ahorro'),
