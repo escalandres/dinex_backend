@@ -1,34 +1,139 @@
-import { db_registrarNuevoUsuario, db_autenticarUsuario, db_cambiarPasswordUsuario, db_crearCodigoOTP, db_validarOTP, db_marcarOTPUsado, db_authGoogle, db_authGithub } from "../services/user.js";
-import { email_OTP } from "./modules/email.mjs";
+import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
-// import jwt from 'jsonwebtoken';
+// Al inicio del archivo
+import { Request, Response } from 'express';
+import { email_OTP } from "./modules/email.mjs";
 import { OAuth2Client } from "google-auth-library";
 import { consoleLog } from "./modules/utils.mjs";
+import { db_registrarNuevoUsuario, db_autenticarUsuario, db_cambiarPasswordUsuario, db_crearCodigoOTP, db_validarOTP, db_marcarOTPUsado, db_authGoogle, db_authGithub } from "../services/user.js";
 
+// Interfaces para tipado
+interface LoginRequest {
+   email: string;
+   password: string;
+}
 
-export async function login(req, res){
+interface User {
+   id: number;
+   email: string;
+   name: string;
+   lastname: string;
+   password: string;
+   country: number;
+}
+
+interface AuthResult {
+   success: boolean;
+   user?: User;
+   message?: string;
+}
+
+interface JWTPayload {
+   user: {
+      id: number;
+      email: string;
+      name: string;
+      lastname: string;
+   };
+}
+
+// Helper function para convertir datos de LibSQL
+function parseUserFromDb(dbUser: any): User {
+   return {
+      id: Number(dbUser.id),
+      email: String(dbUser.email),
+      name: String(dbUser.name),
+      lastname: String(dbUser.lastname),
+      password: String(dbUser.password)
+   };
+}
+
+export async function login(req: Request, res: Response): Promise<Response> {
    try {
-      const { email, password } = req.body;
-      const result = await db_autenticarUsuario(email)
-      if(!result.success){
-         return res.status(404).json({success: false, message: "The user does not exist"})
+      // Validar que req.body existe y tiene la estructura correcta
+      const body = req.body as any;
+      
+      if (!body || typeof body !== 'object') {
+         return res.status(400).json({
+            success: false,
+            message: "Invalid request body"
+         });
       }
-      if(!bcrypt.compareSync(password, result.user.password)) {
-         return res.status(404).json({success: false, message: "The password is invalid"})
-      }
-      // Agregar una cookie con JWT para autenticar a los usuarios   
-      const token = jwt.sign({ user: {
-         id: result.user.id,
-         email: result.user.email,
-         name: result.user.name,
-         lastname: result.user.lastname
-      }}, process.env.KEY, { expiresIn: '1h' });
 
-      return res.status(200).json({ success: true, token: token });
+      const { email, password } = body;
+
+      // Validar que email y password estén presentes
+      if (!email || !password) {
+         return res.status(400).json({
+            success: false,
+            message: "Email and password are required"
+         });
+      }
+
+      // Validar tipos
+      if (typeof email !== 'string' || typeof password !== 'string') {
+         return res.status(400).json({
+            success: false,
+            message: "Email and password must be strings"
+         });
+      }
+      
+      // Asumiendo que esta función retorna AuthResult
+      const result = await db_autenticarUsuario(email);
+      
+      if (!result || !result.success) {
+         return res.status(404).json({ 
+            success: false, 
+            message: "The user does not exist" 
+         });
+      }
+      
+      if (!result.user) {
+         return res.status(404).json({ 
+         success: false, 
+         message: "User data not found" 
+         });
+      }
+      
+      const userData = parseUserFromDb(result.user);
+      if (!bcrypt.compareSync(password, userData.password)) {
+         return res.status(404).json({
+            success: false,
+            message: "The password is invalid"
+         });
+      }
+      
+      // Verificar que la clave JWT existe
+      const jwtSecret = process.env.KEY;
+      if (!jwtSecret) {
+         throw new Error('JWT secret key not configured');
+      }
+      
+      // Crear payload del JWT
+      const payload: JWTPayload = {
+         user: {
+            id: userData.id,
+            email: userData.email,
+            name: userData.name,
+            lastname: userData.lastname
+         }
+      };
+      
+      // Generar token
+      const token: string = jwt.sign(payload, jwtSecret, { expiresIn: '1h' });
+
+      return res.status(200).json({ 
+         success: true, 
+         token: token 
+      });
+      
    } catch (error) {
-      console.error('Ocurrio un error:',error);
-      res.status(401).json({ success: false });
+      console.error('Ocurrió un error:', error);
+      return res.status(401).json({ 
+         success: false,
+         message: 'Authentication failed'
+      });
    }
 }
 
@@ -204,42 +309,6 @@ export async function githubAuth(req, res){
    }
 }
 
-export async function linkedinAuth(req, res){
-   try {
-      consoleLog("-------------Autenticando con LinkedIn-------------");
-      const code = req.body.code;
-
-      const githubToken = await getGithubToken(code);
-      ///consoleLog("githubToken",githubToken)
-      const githubUser = await getGithubUser(githubToken);
-      //consoleLog("githubUser",githubUser)
-      const response = await authGithub(githubUser);
-      // const result = await getUser(oauth.email)
-
-      if(!response.success){
-         return res.status(404).json({success: false, message: "The user does not exist"})
-      }
-      // if(!bcrypt.compareSync(password, result.user.password)) {
-      //     return res.status(404).json({success: false, message: "The password is invalid"})
-      // }
-      // // Agregar una cookie con JWT para autenticar a los usuarios   
-      const token = jwt.sign({ user: {
-         id: response.user.id,
-         email: response.user.email,
-         name: response.user.name,
-         profile_picture: response.user.profile_picture
-      }}, process.env.KEY, { expiresIn: '1h' });
-      //consoleLog("token",token);
-      // res.cookie('AuthToken', token, { maxAge: 3 * 24 * 60 * 60 * 1000 });
-      //req.session.user = { id: result.user.id, email: result.user.email };
-      return res.status(200).json({ success: true, token: token });
-   } catch (error) {
-      console.error('Ocurrio un error:',error);
-      // Enviar respuesta JSON indicando fallo
-      res.status(401).json({ success: false });
-   }
-}
-
 // Extra functions
 
 async function getGithubToken(code){
@@ -279,21 +348,4 @@ async function getGithubUser(token){
       console.error('Error:', error);
    })
    return user;
-}
-async function getLinkedinUser(token){
-    let user = {};
-    await fetch(`https://api.linkedin.com/v2/userinfo`, {
-        method: 'GET',
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    }).then((response) => {
-        return response.json()
-    }).then((data) => {
-        //consoleLog("user", data)
-        user = data;
-    }).catch((error) => {
-        console.error('Error:', error);
-    })
-    return user;
 }
