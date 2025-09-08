@@ -66,7 +66,8 @@ CREATE TABLE IF NOT EXISTS "countries" (
 );
 
 CREATE TABLE IF NOT EXISTS "users" (
-	"id" INTEGER NOT NULL UNIQUE,
+	"id" INTEGER PRIMARY KEY AUTOINCREMENT,
+	"uuid" TEXT UNIQUE NOT NULL DEFAULT (lower(hex(randomblob(16)))),
 	"email" TEXT NOT NULL UNIQUE,
 	"name" TEXT NOT NULL,
 	"lastname" TEXT NOT NULL,
@@ -78,7 +79,6 @@ CREATE TABLE IF NOT EXISTS "users" (
 	"email_verified" BOOLEAN NOT NULL,
 	"created_date" TEXT NOT NULL,
 	"last_login" TEXT NOT NULL,
-	PRIMARY KEY("id"),
 	FOREIGN KEY ("country") REFERENCES "countries"("id")
 	ON UPDATE NO ACTION ON DELETE NO ACTION
 );

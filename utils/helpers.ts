@@ -1,4 +1,4 @@
-
+import jwt from 'jsonwebtoken';
 
 export function formatDate(fecha) {
     const dia = String(fecha.getDate()).padStart(2, '0');
@@ -52,10 +52,15 @@ export function validateToken(token) {
     } 
 };
 
-export function generarOTP() {
-    const min = 100; // El número mínimo de 1 dígitos (inclusive)
-    const max = 999999; // El número máximo de 6 dígitos (inclusive)
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+// export function generateOTP() {
+//     const min = 100; // El número mínimo de 1 dígitos (inclusive)
+//     const max = 999999; // El número máximo de 6 dígitos (inclusive)
+//     const otpNumber = Math.floor(Math.random() * (max - min + 1)) + min;
+//     return otpNumber.toString().padStart(6, '0'); // Asegura que tenga 6 dígitos
+// }
+
+export function generateRandomOTP(length: number = 6) {
+  return Math.floor(Math.random() * Math.pow(10, length)).toString().padStart(length, "0");
 }
 
 export function generateTimestamp() {
@@ -80,4 +85,23 @@ export function formatDateToTimestamp(date) {
     const offsetHours = pad(Math.floor(Math.abs(offset) / 60)); 
     const offsetMinutes = pad(Math.abs(offset) % 60); 
     return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${sign}${offsetHours}:${offsetMinutes}`; 
+}
+
+export function setPadding(
+        text: string,
+        padding: "left" | "right",
+        padChar: string,
+        length: number
+    ): string {
+    if (text.length >= length) {
+        return text.substring(0, length);
+    }
+
+    const missing = length - text.length;
+
+    if (padding === "left") {
+        return padChar.repeat(missing).substring(0, missing) + text;
+    } else {
+        return text + padChar.repeat(missing).substring(0, missing);
+    }
 }

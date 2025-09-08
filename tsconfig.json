@@ -14,7 +14,14 @@
         "forceConsistentCasingInFileNames": true,
         "resolveJsonModule": true,
         "isolatedModules": true,
-        "types": ["@types/node"]
+        "types": ["@types/node"],
+        "baseUrl": "./",
+        "paths": {
+            "@utils/*": ["utils/*"],
+            "@controllers/*": ["controllers/*"],
+            "@services/*": ["services/*"],
+            "@middlewares/*": ["middlewares/*"]
+        }
     },
     "include": ["**/*.ts", "**/*.js"],
     "exclude": ["node_modules", "dist"]

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from "path";
 import sendMail from './nodemailer.js';
-import { consoleLog } from './utils.mjs';
+import { consoleLog } from './helpers.ts';
 
 export const PLANTILLAS = {
     recover: {

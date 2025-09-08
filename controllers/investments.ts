@@ -1,5 +1,5 @@
 
-import { formatDate } from "./modules/utils.mjs";
+import { formatDate } from "@utils/helpers";
 
 export async function obtenerPrecioExacto(req,res) {
     const { symbol, fecha } = req.query;
