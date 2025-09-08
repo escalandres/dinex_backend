@@ -1,5 +1,5 @@
 
-import { formatearFecha } from "./modules/utils.mjs";
+import { formatDate } from "./modules/utils.mjs";
 
 export async function obtenerPrecioExacto(req,res) {
     const { symbol, fecha } = req.query;
@@ -12,7 +12,7 @@ export async function obtenerPrecioExacto(req,res) {
     const fechaCDMX = new Date(fecha);
     const offsetCDT = 5 * 60 * 60 * 1000; // UTC-5 en agosto
     const fechaUTC = new Date(fechaCDMX.getTime() + offsetCDT);
-    const formattedDate = formatearFecha(fechaCDMX);
+    const formattedDate = formatDate(fechaCDMX);
     // Paso 2: Obtener timestamps UNIX
     const timestampInicio = Math.floor(fechaUTC.getTime() / 1000);
     const timestampFin = timestampInicio + 900; // 15 minutos de margen

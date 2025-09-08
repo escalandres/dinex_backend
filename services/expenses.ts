@@ -1,9 +1,9 @@
-import db from '../db.js';
+import db from './db.js';
 
-export async function crearGasto(GastoData) {
+export async function db_registerExpense(GastoData) {
     await db.execute({
         sql: `
-        INSERT INTO Gastos (id_usuario, id_instrumento, descripcion, fecha, tipo, plazo_dias, monto, fecha_creacion)
+        INSERT INTO expenses (user_id, id_instrumento, descripcion, fecha, tipo, plazo_dias, monto, fecha_creacion)
         VALUES (?, ?, ?, ?, ?, ?, ?)
         `,
         args: [
@@ -18,12 +18,12 @@ export async function crearGasto(GastoData) {
     });
 }
 
-export async function obtenerGastosPorUsuario(idUsuario) {
-    const Gastos = await db.execute("SELECT * FROM Gastos WHERE id_usuario = ?", [idUsuario]);
-    return Gastos.rows.length > 0 ? Gastos.rows : null;
+export async function db_getExpensesByUser(userId) {
+    const expenses = await db.execute("SELECT * FROM Gastos WHERE id_usuario = ?", [userId]);
+    return expenses.rows.length > 0 ? expenses.rows : null;
 }
 
-export async function actualizarGasto(GastoData) {
+export async function db_updateExpense(GastoData) {
     await db.execute({
         sql: `
         UPDATE Gastos SET descripcion = ?, monto = ?
@@ -37,6 +37,6 @@ export async function actualizarGasto(GastoData) {
     });
 }
 
-export async function eliminarGasto(id) {
+export async function db_deleteExpense(id) {
     await db.execute("DELETE FROM Gastos WHERE id = ?", [id]);
 }

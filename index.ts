@@ -11,9 +11,9 @@ import { testConnection } from './services/db.ts';
 
 // -------------- My modules --------------
 import userRoutes from './routes/user.js';
-import inversionesRoute from './routes/inversiones.js';
-import instrumentosRoute from './routes/instrumentos.js';
-import catalogosRoute from './routes/catalogos.js';
+import inversionesRoute from './routes/investments.js';
+import instrumentosRoute from './routes/instruments.js';
+import catalogosRoute from './routes/catalogs.js';
 
 // -------------- Variables modules --------------
 const app: Application = express();
@@ -78,24 +78,6 @@ app.get('/test', (req: Request, res: Response) => {
             "simbolo_moneda": "$",
             "formato_moneda": "$#,##0.00",
             "emoji_bandera": "🇺🇸"
-        },
-        {
-            "id": 3,
-            "nombre": "Japón",
-            "codigo_iso": "JP",
-            "moneda_local": "Yen japonés",
-            "simbolo_moneda": "¥",
-            "formato_moneda": "¥#,##0",
-            "emoji_bandera": "🇯🇵"
-        },
-        {
-            "id": 4,
-            "nombre": "España",
-            "codigo_iso": "ES",
-            "moneda_local": "Euro",
-            "simbolo_moneda": "€",
-            "formato_moneda": "€#,##0.00",
-            "emoji_bandera": "🇪🇸"
         }
     ];
     

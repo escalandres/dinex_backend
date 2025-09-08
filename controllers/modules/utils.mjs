@@ -1,6 +1,6 @@
 
 
-export function formatearFecha(fecha) {
+export function formatDate(fecha) {
     const dia = String(fecha.getDate()).padStart(2, '0');
     const mes = String(fecha.getMonth() + 1).padStart(2, '0'); // Los meses van de 0 a 11
     const año = fecha.getFullYear();
@@ -53,7 +53,7 @@ export function validateToken(token) {
 };
 
 export function generarOTP() {
-    const min = 100000; // El número mínimo de 6 dígitos (inclusive)
+    const min = 100; // El número mínimo de 1 dígitos (inclusive)
     const max = 999999; // El número máximo de 6 dígitos (inclusive)
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
