@@ -19,12 +19,13 @@
         "paths": {
             "@utils/*": ["utils/*"],
             "@controllers/*": ["controllers/*"],
+            "@routes/*": ["routes/*"],
             "@services/*": ["services/*"],
             "@middlewares/*": ["middlewares/*"],
             "@schemas/*": ["src/schemas/*"],
             "@mappers/*": ["src/mappers/*"],
             "@interfaces/*": ["src/interfaces/*"],
-            "@auth/*": ["src/auth/*"]
+            "@auth/*": ["src/auth/*"],
         }
     },
     "include": ["**/*.ts", "**/*.js"],

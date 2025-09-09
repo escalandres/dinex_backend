@@ -3,7 +3,9 @@ import path from "path";
 import sendMail from './nodemailer.js';
 import { consoleLog } from './helpers.ts';
 
-export const PLANTILLAS = {
+const EMAIL_TEMPLATES_PATH = path.join(global.TEMPLATES_PATH, "email");
+
+export const TEMPLATES = {
     recover: {
         subject: "Recuperar cuenta",
         file: 'p.html'
@@ -24,8 +26,7 @@ export const PLANTILLAS = {
 
 export async function email_OTP(email,otp) {
     try{
-        const templateFolder = EMAIL_TEMPLATES_PATH;
-        const templatePath = path.join(templateFolder, `${PLANTILLAS.otp.file}`);
+        const templatePath = path.join(EMAIL_TEMPLATES_PATH, `${TEMPLATES.otp.file}`);
         let template = fs.readFileSync(templatePath, 'utf8');
         consoleLog("template");
         const variables = {
@@ -39,7 +40,7 @@ export async function email_OTP(email,otp) {
             template = template.replace(regex, variables[key]);
         });
     
-        let subject = `${PLANTILLAS.otp.subject} ${otp}`;
+        let subject = `${TEMPLATES.otp.subject} ${otp}`;
         let info = await sendMail(email,subject,template);
         return {success: true, message: info};
     }catch(error){

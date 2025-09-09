@@ -10,10 +10,10 @@ import { testConnection } from './services/db.ts';
 
 
 // -------------- My modules --------------
-import userRoutes from './routes/user.js';
-import inversionesRoute from './routes/investments.js';
-import instrumentosRoute from './routes/instruments.js';
-import catalogosRoute from './routes/catalogs.js';
+import userRoutes from '@routes/user.js';
+import investmentsRoute from '@routes/investments.js';
+import instrumentsRoute from '@routes/instruments.js';
+import catalogsRoute from '@routes/catalogs.js';
 
 // -------------- Variables modules --------------
 const app: Application = express();
@@ -29,14 +29,12 @@ const __dirname: string = dirname(currentFilePath);
 // Extender el namespace global
 declare global {
     var __dirname: string;
-    var EMAIL_TEMPLATES_PATH: string;
-    var PDF_TEMPLATES_PATH: string;
+    var TEMPLATES_PATH: string;
     var TEMP_PATH: string;
 }
 
 global.__dirname = __dirname;
-global.EMAIL_TEMPLATES_PATH = path.join(__dirname, 'src', 'email_templates');
-global.PDF_TEMPLATES_PATH = path.join(__dirname, 'src', 'pdf_templates');
+global.TEMPLATES_PATH = path.join(__dirname, 'src', 'templates');
 global.TEMP_PATH = path.join(__dirname, 'temp');
 
 // -------------- Settings --------------
@@ -119,9 +117,9 @@ app.get('/paises', async (req: Request, res: Response) => {
 
 // Use routes
 app.use('/user', userRoutes);
-app.use('/inversiones', inversionesRoute);
-app.use('/instrumentos', instrumentosRoute);
-app.use('/catalog', catalogosRoute);
+app.use('/app/investments', investmentsRoute);
+app.use('/app/instruments', instrumentsRoute);
+app.use('/app/catalogs', catalogsRoute);
 
 // Start server
 const PORT: string | number = process.env.PORT || 3000;
