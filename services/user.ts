@@ -1,15 +1,16 @@
+import { count } from 'console';
 import db from './db.js';
 
 export async function db_registrerUser(userData) {
     await db.execute({
         sql: `
-        INSERT INTO usuarios (email, nombre, apellido, oauth_provider, oauth_user_id, email_verified, profile_picture, created_date, last_login, hashed_password, country)
+        INSERT INTO usuarios (email, name, lastname, oauth_provider, oauth_user_id, email_verified, profile_picture, created_date, last_login, hashed_password, country)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `,
         args: [
             userData.email,                  // email
-            userData.nombre,                 // nombre
-            userData.apellido,               // apellido
+            userData.name,                 // name
+            userData.lastname,               // lastname
             userData.oauth_provider || '',   // oauth_provider
             userData.oauth_user_id || '',    // oauth_user_id
             false,                           // email_verified
@@ -152,7 +153,16 @@ export async function db_markOTPUsed(userId, code) {
   });
 }
 
-export async function db_authGoogle(oauth: any) {
+export async function db_registerOAuthUser(oauth: {
+  email: string;
+  name: string;
+  lastname?: string;
+  provider: string;
+  providerUserId: string;
+  emailVerified: boolean;
+  picture?: string;
+  countryId?: number;
+}) {
   try {
     // Buscar usuario por email
     const stmtFind = await db.execute({
@@ -171,77 +181,40 @@ export async function db_authGoogle(oauth: any) {
 
       return { success: true, user, error: "" };
     } else {
-      const userID = crypto.randomBytes(16).toString("hex");
       const provider = "https://accounts.google.com";
 
       await db.execute({
         sql: `
           INSERT INTO users (
-            id, email, name, given_name, lastname, oauth_provider, oauth_user_id,
-            email_verified, profile_picture, created_date, last_login
+            email, name, lastname, oauth_provider, oauth_user_id,
+            email_verified, profile_picture, created_date, last_login, hashed_password, country
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         `,
         args: [
-          userID,
           oauth.email,
           oauth.name,
-          oauth.given_name,
-          oauth.family_name,
           provider,
-          oauth.sub,
-          oauth.email_verified ? 1 : 0,
+          oauth.providerUserId,
+          oauth.emailVerified ? 1 : 0,
           oauth.picture,
+          Date.now(),                      // created_date
+          Date.now(),
+          "",
+          oauth.countryId // Default country ID: Mexico
         ],
       });
 
-      // Recuperar usuario recién creado
+      // Get the newly uuid created user
       const newUserRes = await db.execute({
-        sql: "SELECT * FROM users WHERE email = ?",
+        sql: "SELECT uuid FROM users WHERE email = ?",
         args: [oauth.email],
       });
 
-      const newUser = newUserRes.rows[0];
-      return { success: true, user: newUser, error: "" };
+      const newUser = newUserRes.rows[0].uuid;
+      return { success: true, userUUID: newUser, error: "" };
     }
   } catch (error) {
     console.error("Error en authGoogle:", error);
     return { success: false, user: {}, error };
-  }
-}
-
-export async function db_authGithub(oauth) {
-  const db = new Database('your_database.db');
-  try {
-    const stmtFind = db.prepare('SELECT * FROM users WHERE email = ?');
-    const user = stmtFind.get(oauth.email);
-
-    if (user) {
-      const stmtUpdate = db.prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE email = ?');
-      stmtUpdate.run(oauth.email);
-      return { success: true, user, error: "" };
-    } else {
-      const userID = crypto.randomBytes(16).toString('hex');
-      const provider = "https://api.github.com";
-
-      const stmtInsert = db.prepare(`
-        INSERT INTO users (
-          id, email, name, oauth_provider, oauth_user_id,
-          email_verified, profile_picture, created_date, last_login
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      `);
-
-      stmtInsert.run(
-        userID, oauth.email, oauth.name, provider, oauth.id,
-        1, oauth.avatar_url
-      );
-
-      const newUser = stmtFind.get(oauth.email);
-      return { success: true, user: newUser, error: "" };
-    }
-  } catch (error) {
-    console.error('Error en authGithub:', error);
-    return { success: false, user: {}, error };
-  } finally {
-    db.close();
   }
 }

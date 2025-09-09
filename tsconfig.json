@@ -20,7 +20,11 @@
             "@utils/*": ["utils/*"],
             "@controllers/*": ["controllers/*"],
             "@services/*": ["services/*"],
-            "@middlewares/*": ["middlewares/*"]
+            "@middlewares/*": ["middlewares/*"],
+            "@schemas/*": ["src/schemas/*"],
+            "@mappers/*": ["src/mappers/*"],
+            "@interfaces/*": ["src/interfaces/*"],
+            "@auth/*": ["src/auth/*"]
         }
     },
     "include": ["**/*.ts", "**/*.js"],

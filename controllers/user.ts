@@ -1,48 +1,23 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-import { Request, response, Response } from 'express';
-import { email_OTP } from "@utils/emails.ts";
+import { Request, Response } from 'express';
+// Import interfaces
+import { User, Register, JWTPayload } from '@interfaces/user';
+
+// ------ Import schemas and mapping functions ------
+// Google
 import { OAuth2Client } from "google-auth-library";
+import { GoogleUserSchema, GoogleUser } from "@schemas/google";
+import { mapGoogleToDB } from "@mappers/googleToDB";
+// GitHub
+import { getGithubToken, getGithubUser } from "@auth/providers/github";
+import { GithubUserSchema, GithubUser } from "@schemas/github";
+import { mapGithubToDB } from "@mappers/githubToDB";
+
+// Import utils y services
+import { email_OTP } from "@utils/emails.ts";
 import { consoleLog, generateRandomOTP } from "@utils/helpers.ts";
-import { db_registrerUser, db_authenticateUser, db_changeUserPassword, db_generateOTP, db_validateOTP, db_markOTPUsed } from "@services/user.js";
-
-// Interfaces para tipado
-interface LoginRequest {
-   email: string;
-   password: string;
-}
-
-interface User {
-   uuid: string;
-   email: string;
-   name: string;
-   lastname: string;
-   hashedPassword: string;
-   profile_picture?: string;
-   country: object;
-}
-
-interface Register {
-   uuid: string;
-   country?: object;
-}
-
-interface AuthResult {
-   success: boolean;
-   user?: User;
-   message?: string;
-}
-
-interface JWTPayload {
-   user: {
-      uuid: string;
-      email: string;
-      name: string;
-      lastname: string;
-      profile_picture?: string;
-      country: object;
-   };
-}
+import { db_registrerUser, db_authenticateUser, db_changeUserPassword, db_generateOTP, db_validateOTP, db_markOTPUsed, db_registerOAuthUser } from "@services/user.js";
 
 // Helper function para convertir datos de LibSQL
 function parseUserFromDb(dbUser: any): User {
@@ -312,118 +287,113 @@ export async function validateOTP(req: Request, res: Response): Promise<Response
    }
 }
 
-// export async function googleAuth(req: Request, res: Response): Promise<Response> {
-//    try {
-//       consoleLog("-------------Autenticando con Google-------------");
-//       const oAuth2Client = new OAuth2Client(
-//          process.env.GOOGLE_CLIENT_ID,
-//          process.env.GOOGLE_CLIENT_SECRET,
-//          'postmessage',
-//       );
-//       // Configura el token de acceso
-//       oAuth2Client.setCredentials({
-//          access_token: req.body.oauth
-//       });
+export async function googleAuth(req: Request, res: Response): Promise<Response> {
+   try {
+      consoleLog("🔐 Autenticando con Google...");
 
-//       // Realiza una solicitud a la API de Google para obtener la información del usuario
-//       const url = 'https://www.googleapis.com/oauth2/v3/userinfo';
-//       const googleResponse = await oAuth2Client.request({ url });
-//       const userInfoGoogle = googleResponse.data;
-//       // Imprime la información del usuario
-//       //consoleLog("user google", userInfoGoogle);
-//       const response = await db_authGoogle(userInfoGoogle);
-//       if(!response.success){
-//          return res.status(401).json({success: false, message: "Error al crear su cuenta de usuario. Inténtelo nuevamente"})
-//       }
-//       // Agregar una cookie con JWT para autenticar a los usuarios
-//       const token = jwt.sign({ user: {
-//          id: response.user.id,
-//          email: response.user.email,
-//          name: response.user.name,
-//          profile_picture: response.user.profile_picture
-//       }}, process.env.KEY, { expiresIn: '1h' });
-//       return res.status(200).json({success: true, token: token})
-//    } catch (error) {
-//       console.error('Ocurrio un error:',error);
-//       // Enviar respuesta JSON indicando fallo
-//       return res.status(401).json({ success: false });
-//    }
-// }
+      const accessToken = req.body?.oauth;
+      if (!accessToken || typeof accessToken !== "string") {
+         return res.status(400).json({
+         success: false,
+         message: "Token OAuth inválido o ausente"
+         });
+      }
 
-// export async function githubAuth(req: Request, res: Response): Promise<Response> {
-//    try {
-//       consoleLog("-------------Autenticando con GitHub-------------");
-//       const code = req.body.code;
-//       // consoleLog("------code",code)
-//       const githubToken = await getGithubToken(code);
-//       if(githubToken === undefined) return res.status(401).json({ success: false });
-//       ///consoleLog("githubToken",githubToken)
-//       const githubUser = await getGithubUser(githubToken);
-//       //consoleLog("githubUser",githubUser)
-//       const response = await db_authGithub(githubUser);
-//       // const result = await getUser(oauth.email)
+      const oAuth2Client = new OAuth2Client(
+         process.env.GOOGLE_CLIENT_ID,
+         process.env.GOOGLE_CLIENT_SECRET,
+         "postmessage"
+      );
 
-//       if(!response.success){
-//          return res.status(404).json({success: false, message: "The user does not exist"})
-//       }
-//       // if(!bcrypt.compareSync(password, result.user.password)) {
-//       //     return res.status(404).json({success: false, message: "The password is invalid"})
-//       // }
-//       // // Agregar una cookie con JWT para autenticar a los usuarios   
-//       const token = jwt.sign({ user: {
-//          id: response.user.id,
-//          email: response.user.email,
-//          name: response.user.name,
-//          profile_picture: response.user.profile_picture
-//       }}, process.env.KEY, { expiresIn: '1h' });
-//       // consoleLog("token",token);
-//       // res.cookie('AuthToken', token, { maxAge: 3 * 24 * 60 * 60 * 1000 });
-//       //req.session.user = { id: result.user.id, email: result.user.email };
-//       return res.status(200).json({ success: true, token: token });
-//    } catch (error) {
-//       console.error('Ocurrio un error:',error);
-//       // Enviar respuesta JSON indicando fallo
-//       res.status(401).json({ success: false });
-//    }
-// }
+      oAuth2Client.setCredentials({ access_token: accessToken });
 
-// // Extra functions
+      const { data } = await oAuth2Client.request({
+         url: process.env.GOOGLE_OAUTH_URL as string
+      });
 
-// async function getGithubToken(code){
-//    let token = '';
-//    const params = `?client_id=${process.env.GITHUB_CLIENT_ID}&client_secret=${process.env.GITHUB_CLIENT_SECRET}&code=${code}`;
-//    //consoleLog("-------params",params);
-//    await fetch(`https://github.com/login/oauth/access_token${params}`, {
-//       method: 'POST',
-//       headers: {
-//          'Accept': 'application/json'
-//       }
-//    }).then((response) => { 
-//       return response.json()
-//    }).then((data) => {
-//       //consoleLog(data)
-//       consoleLog("getGithubToken",data.access_token);
-//       token = data.access_token;
-//    }).catch((error) => {
-//       console.error('Error:', error);
-//    })
-//    return token;
-// }
+      const validation = GoogleUserSchema.safeParse(data);
+      if (!validation.success) {
+         return res.status(400).json({
+         success: false,
+         message: "Datos de usuario inválidos desde Google"
+         });
+      }
 
-// async function getGithubUser(token){
-//    let user = {};
-//    await fetch(`https://api.github.com/user`, {
-//       method: 'GET',
-//       headers: {
-//          'Authorization': `Bearer ${token}`
-//       }
-//    }).then((response) => {
-//       return response.json()
-//    }).then((data) => {
-//       consoleLog("user", data)
-//       user = data;
-//    }).catch((error) => {
-//       console.error('Error:', error);
-//    })
-//    return user;
-// }
+      const googleUser: GoogleUser = validation.data;
+      const userInput = mapGoogleToDB(googleUser);
+      const response = await db_registerOAuthUser(userInput);
+
+      if (!response.success || !response.user) {
+         return res.status(500).json({
+         success: false,
+         message: "Error al registrar el usuario. Inténtelo nuevamente."
+         });
+      }
+
+      const token = jwt.sign({
+         user: {
+            id: response.userUUID,
+            email: userInput.email,
+            lastname: userInput.lastname,
+            name: userInput.name,
+            profile_picture: userInput.picture,
+            country: { id: userInput.countryId }
+         }}, process.env.KEY as string, { expiresIn: "1h" }
+      );
+
+      return res.status(200).json({ success: true, token });
+   } catch (error: any) {
+      console.error("❌ Error en googleAuth:", error?.message || error);
+      return res.status(500).json({
+         success: false,
+         message: "Error interno al autenticar con Google"
+      });
+   }
+}
+
+export async function githubAuth(req: Request, res: Response): Promise<Response> {
+   try {
+      consoleLog("🔐 Autenticando con GitHub...");
+
+      const code = req.body?.code;
+      if (!code || typeof code !== "string") {
+         return res.status(400).json({ success: false, message: "Código OAuth inválido o ausente" });
+      }
+
+      const githubToken = await getGithubToken(code);
+      if (!githubToken) {
+         return res.status(401).json({ success: false, message: "No se pudo obtener el token de GitHub" });
+      }
+
+      const rawUser = await getGithubUser(githubToken);
+      const validation = GithubUserSchema.safeParse(rawUser);
+
+      if (!validation.success) {
+         return res.status(400).json({ success: false, message: "Datos de usuario inválidos desde GitHub" });
+      }
+
+      const githubUser: GithubUser = validation.data;
+      const userInput = mapGithubToDB(githubUser);
+      const response = await db_registerOAuthUser(userInput);
+
+      if (!response.success || !response.user) {
+         return res.status(500).json({ success: false, message: "Error al registrar el usuario" });
+      }
+
+      const token = jwt.sign({
+         user: {
+            id: response.userUUID,
+            email: userInput.email,
+            lastname: userInput.lastname,
+            name: userInput.name,
+            profile_picture: userInput.picture,
+            country: { id: userInput.countryId }
+         }}, process.env.KEY as string, { expiresIn: "1h" }
+      );
+
+      return res.status(200).json({ success: true, token });
+   } catch (error: any) {
+      console.error("❌ Error en githubAuth:", error?.message || error);
+      return res.status(500).json({ success: false, message: "Error interno al autenticar con GitHub" });
+   }
+}
