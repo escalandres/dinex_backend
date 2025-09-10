@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from "path";
+import '@src/config/globals.js';
 import sendMail from './nodemailer.js';
 import { consoleLog } from './helpers.ts';
 

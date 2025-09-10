@@ -1,41 +1,18 @@
 //NPM modules - ECMAScript Modules
-import path from 'path';
 import cors from 'cors';
 import express, { Request, Response, Application } from 'express';
 import fs from 'fs';
 import https from 'https';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
 import { testConnection } from './services/db.ts';
-
-
-// -------------- My modules --------------
-import userRoutes from '@routes/user.js';
-import investmentsRoute from '@routes/investments.js';
-import instrumentsRoute from '@routes/instruments.js';
-import catalogsRoute from '@routes/catalogs.js';
 
 // -------------- Variables modules --------------
 const app: Application = express();
 
-// -------------- Variables Globales --------------
-// Obtiene la URL del archivo actual
-const currentFileURL: string = import.meta.url;
-// Convierte la URL del archivo en una ruta de sistema de archivos
-const currentFilePath: string = fileURLToPath(currentFileURL);
-// Obtiene el directorio del archivo actual
-const __dirname: string = dirname(currentFilePath);
-
-// Extender el namespace global
-declare global {
-    var __dirname: string;
-    var TEMPLATES_PATH: string;
-    var TEMP_PATH: string;
-}
-
-global.__dirname = __dirname;
-global.TEMPLATES_PATH = path.join(__dirname, 'src', 'templates');
-global.TEMP_PATH = path.join(__dirname, 'temp');
+// -------------- Routes --------------
+import userRoutes from '@routes/user.js';
+import investmentsRoute from '@routes/investments.js';
+import instrumentsRoute from '@routes/instruments.js';
+import catalogsRoute from '@routes/catalogs.js';
 
 // -------------- Settings --------------
 app.use(express.json());
