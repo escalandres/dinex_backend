@@ -101,7 +101,7 @@ app.use('/app/catalogs', catalogsRoute);
 // Start server
 const PORT: string | number = process.env.PORT || 3000;
 
-// Probar conexión a base de datos antes de iniciar
+// Test connection to database before starting the server
 testConnection().then((connected) => {
     if (connected) {
         app.listen(PORT, () => {

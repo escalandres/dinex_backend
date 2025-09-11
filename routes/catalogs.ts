@@ -3,7 +3,7 @@ import { getCountries } from '../controllers/catalogs.js';
 
 const router = express.Router();
 
-router.get('/paises', getCountries);
+router.get('/countries', getCountries);
 
 
 export default router;
