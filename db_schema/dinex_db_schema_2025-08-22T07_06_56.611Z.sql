@@ -108,6 +108,7 @@ CREATE TABLE IF NOT EXISTS "instruments" (
 	"subtype" INTEGER NOT NULL,
 	"cut_off_day" INTEGER NOT NULL,
 	"payment_due_day" INTEGER NOT NULL,
+	"currency" TEXT NOT NULL,
 	PRIMARY KEY("id"),
 	FOREIGN KEY ("user_id") REFERENCES "users"("id")
 	ON UPDATE NO ACTION ON DELETE NO ACTION
@@ -121,6 +122,7 @@ CREATE TABLE IF NOT EXISTS "expenses" (
 	"frequency" INTEGER NOT NULL,
 	"expense_type" INTEGER,
 	"amount" NUMERIC NOT NULL,
+	"currency" TEXT NOT NULL,
 	"term" INTEGER DEFAULT 0,
 	"application_date" TEXT,
 	"registration_date" TEXT,
@@ -166,10 +168,14 @@ CREATE TABLE IF NOT EXISTS "incomes" (
 	"source" INTEGER NOT NULL,
 	"description" TEXT,
 	"amount" NUMERIC NOT NULL,
+	"currency" TEXT NOT NULL,
+	"frequency" INTEGER NOT NULL,
 	"registration_date" TEXT,
 	"application_date" TEXT,
 	PRIMARY KEY("id"),
 	FOREIGN KEY ("user_id") REFERENCES "users"("id")
+	ON UPDATE NO ACTION ON DELETE NO ACTION,
+	FOREIGN KEY ("frequency") REFERENCES "frequency_catalog"("id")
 	ON UPDATE NO ACTION ON DELETE NO ACTION,
 	FOREIGN KEY ("source") REFERENCES "income_sources_catalog"("id")
 	ON UPDATE NO ACTION ON DELETE NO ACTION
