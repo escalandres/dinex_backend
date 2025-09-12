@@ -1,6 +1,6 @@
 import { uuid, z } from 'zod';
 
-// Schema para registro
+// Schema for registration
 export const signupSchema = z.object({
     email: z.string()
         .email("Email must be a valid email address")
@@ -30,7 +30,7 @@ export const signupSchema = z.object({
         .positive("Country ID must be a positive number")
 });
 
-// Schema para login
+// Schema for login
 export const loginSchema = z.object({
     email: z.string()
         .email("Email must be a valid email address")
@@ -39,7 +39,7 @@ export const loginSchema = z.object({
         .min(1, "Password is required")
 });
 
-// Schema para actualizar perfil
+// Schema for updating profile
 export const updateProfileSchema = z.object({
     name: z.string()
         .min(1, "Name is required")
@@ -63,7 +63,7 @@ export const updateProfileSchema = z.object({
     message: "At least one field must be provided"
 });
 
-// Schema para cambiar password
+// Schema for changing password
 export const changePasswordSchema = z.object({
         currentPassword: z.string().min(1, "Current password is required"),
         
@@ -81,10 +81,48 @@ export const changePasswordSchema = z.object({
     path: ["confirmPassword"]
 });
 
-// Agrupa todos los schemas
+export const oauthSchema = z.object({
+    email: z.string()
+        .email("Email must be a valid email address")
+        .min(1, "Email is required")
+        .transform(val => val.toLowerCase().trim()),
+    name: z.string()
+        .min(1, "Name is required")
+        .max(50, "Name must be less than 50 characters")
+        .regex(/^[a-zA-ZÀ-ÿ\s]+$/, "Name can only contain letters and spaces")
+        .transform(val => val.trim()),
+    lastname: z.string()
+        .max(50, "Last name must be less than 50 characters")
+        .regex(/^[a-zA-ZÀ-ÿ\s]*$/, "Last name can only contain letters and spaces")
+        .transform(val => val.trim())
+        .optional(),
+    provider: z.string()
+        .min(1, "Provider is required"),
+    providerUserId: z.string()
+        .min(1, "Provider user ID is required"),
+    emailVerified: z.boolean(),
+    picture: z.string()
+        .url("Picture must be a valid URL")
+        .optional(),
+    countryId: z.number()
+        .int("Country ID must be an integer")
+        .positive("Country ID must be a positive number")
+        .optional()
+});
+
+export const fileSchema = z.object({
+    originalname: z.string().min(1, "File name is required"),
+    mimetype: z.string().regex(/^image\/(jpeg|png|gif)$/, "Only JPEG, PNG, and GIF images are allowed"),
+    size: z.number().max(3 * 1024 * 1024, "File size must be less than 3MB"), // 3MB
+    uuid: z.string().uuid()
+});
+
+// Group all schemas
 export const schemas = {
     signup: signupSchema,
     login: loginSchema,
     updateProfile: updateProfileSchema,
-    changePassword: changePasswordSchema
+    changePassword: changePasswordSchema,
+    oauth: oauthSchema,
+    file: fileSchema
 };

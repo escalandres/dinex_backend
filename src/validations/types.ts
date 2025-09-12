@@ -3,23 +3,27 @@ import {
     signupSchema, 
     loginSchema, 
     updateProfileSchema, 
-    changePasswordSchema 
+    changePasswordSchema,
+    oauthSchema,
+    fileSchema
 } from './schemas';
 
-// Tipos TypeScript inferidos de los schemas
+// TypeScript types inferred from schemas
 export type SignupData = z.infer<typeof signupSchema>;
 export type LoginData = z.infer<typeof loginSchema>;
 export type UpdateProfileData = z.infer<typeof updateProfileSchema>;
 export type ChangePasswordData = z.infer<typeof changePasswordSchema>;
+export type OAuthData = z.infer<typeof oauthSchema>;
+export type FileData = z.infer<typeof fileSchema>;
 
-// Tipo para respuestas de error de validación
+// Type for validation error responses
 export interface ValidationError {
     field: string;
     message: string;
     code: string;
 }
 
-// Tipo para respuestas de API
+// Type for API responses
 export interface ApiResponse<T = any> {
     success: boolean;
     message?: string;
@@ -27,7 +31,7 @@ export interface ApiResponse<T = any> {
     errors?: ValidationError[];
 }
 
-// Tipos para JWT
+// Types for JWT
 export interface JWTPayload {
     user: {
         uuid: string;
@@ -42,7 +46,7 @@ export interface JWTPayload {
     };
 }
 
-// Extiende el Request de Express para incluir user autenticado
+// Extend Express Request to include authenticated user
 declare global {
     namespace Express {
         interface Request {

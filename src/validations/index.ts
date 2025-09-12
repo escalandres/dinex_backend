@@ -1,8 +1,8 @@
-// Exportar todos los schemas
+// Export all schemas
 export * from './schemas';
 
-// Exportar middlewares
+// Export middlewares
 export * from './middleware';
 
-// Exportar tipos
+// Export types
 export * from './types';
