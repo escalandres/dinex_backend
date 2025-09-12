@@ -1,7 +1,7 @@
 import { count } from 'console';
 import db from './db.js';
 
-export async function db_registrerUser(userData) {
+export async function db_registerUser(userData) {
     await db.execute({
         sql: `
         INSERT INTO usuarios (email, name, lastname, oauth_provider, oauth_user_id, email_verified, profile_picture, created_date, last_login, hashed_password, country)
@@ -193,6 +193,7 @@ export async function db_registerOAuthUser(oauth: {
         args: [
           oauth.email,
           oauth.name,
+          oauth.lastname,
           provider,
           oauth.providerUserId,
           oauth.emailVerified ? 1 : 0,

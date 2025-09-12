@@ -3,6 +3,8 @@ import bcrypt from 'bcrypt';
 import { Request, Response } from 'express';
 // Import interfaces
 import { User, Register, JWTPayload } from '@interfaces/user';
+import { signupSchema, loginSchema, changePasswordSchema } from '@validations/schemas';
+import { SignupData, LoginData, ChangePasswordData } from '@validations/types';
 
 // ------ Import schemas and mapping functions ------
 // Google
@@ -17,7 +19,7 @@ import { mapGithubToDB } from "@mappers/githubToDB";
 // Import utils y services
 import { email_OTP } from "@utils/emails.ts";
 import { consoleLog, generateRandomOTP } from "@utils/helpers.ts";
-import { db_registrerUser, db_authenticateUser, db_changeUserPassword, db_generateOTP, db_validateOTP, db_markOTPUsed, db_registerOAuthUser } from "@services/user.js";
+import { db_registerUser, db_authenticateUser, db_changeUserPassword, db_generateOTP, db_validateOTP, db_markOTPUsed, db_registerOAuthUser } from "@services/user.js";
 
 // Helper function para convertir datos de LibSQL
 function parseUserFromDb(dbUser: any): User {
@@ -41,35 +43,24 @@ function parseRegisterFromDb(dbUser: any): Register {
 
 export async function login(req: Request, res: Response): Promise<Response> {
    try {
-      // Validar que req.body existe y tiene la estructura correcta
-      const body = req.body as any;
-      
-      if (!body || typeof body !== 'object') {
+      // Validation with Zod
+      const validationResult = loginSchema.safeParse(req.body);
+
+      if (!validationResult.success) {
+         const errors = validationResult.error.issues.map(err => ({
+            field: err.path.join('.'),
+            message: err.message
+         }));
+
          return res.status(400).json({
             success: false,
-            message: "Invalid request body"
+            message: "Validation failed",
+            errors: errors
          });
       }
 
-      const { email, password } = body;
-
-      // Validar que email y password estén presentes
-      if (!email || !password) {
-         return res.status(400).json({
-            success: false,
-            message: "Email and password are required"
-         });
-      }
-
-      // Validar tipos
-      if (typeof email !== 'string' || typeof password !== 'string') {
-         return res.status(400).json({
-            success: false,
-            message: "Email and password must be strings"
-         });
-      }
-      
-      // Asumiendo que esta función retorna AuthResult
+      const { email, password } : LoginData = validationResult.data;
+      // Authenticate user
       const result = await db_authenticateUser(email);
       
       if (!result || !result.success) {
@@ -94,13 +85,13 @@ export async function login(req: Request, res: Response): Promise<Response> {
          });
       }
       
-      // Verificar que la clave JWT existe
+      // Check if JWT secret key exists
       const jwtSecret = process.env.KEY;
       if (!jwtSecret) {
          throw new Error('JWT secret key not configured');
       }
-      
-      // Crear payload del JWT
+
+      // Create payload for JWT
       const payload: JWTPayload = {
          user: {
             uuid: userData.uuid,
@@ -111,8 +102,8 @@ export async function login(req: Request, res: Response): Promise<Response> {
             country: userData.country
          }
       };
-      
-      // Generar token
+
+      // Generate token
       const token: string = jwt.sign(payload, jwtSecret, { expiresIn: '1h' });
 
       return res.status(200).json({ 
@@ -131,59 +122,50 @@ export async function login(req: Request, res: Response): Promise<Response> {
 
 export async function signup(req: Request, res: Response): Promise<Response> {
    try {
-      // Validar que req.body existe y tiene la estructura correcta
-      const body = req.body as any;
-      if (!body || typeof body !== 'object') {
+      // Validation with Zod
+      const validationResult = signupSchema.safeParse(req.body);
+      
+      if (!validationResult.success) {
+         const errors = validationResult.error.issues.map(err => ({
+            field: err.path.join('.'),
+            message: err.message
+         }));
+         
          return res.status(400).json({
             success: false,
-            message: "Invalid request body"
+            message: "Validation failed",
+            errors: errors
          });
       }
 
-      const { email, password, name, lastname, country } = body;
-
-      // Validar que email y password estén presentes
-      if (!email || !password || !name || !lastname || !country) {
-         return res.status(400).json({
-            success: false,
-            message: "Email, password, name, lastname and country are required"
-         });
-      }
-
-      // Validar tipos
-      if (typeof email !== 'string' || typeof password !== 'string' || typeof name !== 'string' || typeof lastname !== 'string' || typeof country !== 'number') {
-         return res.status(400).json({
-            success: false,
-            message: "Email, password, name, lastname must be strings, and country must be a number"
-         });
-      }
+      const { email, password, name, lastname, countryId }: SignupData = validationResult.data;
 
       const hashedPassword = await bcrypt.hash(password, 10);
 
       let user = {
          email: email, name: name, lastname: lastname, 
-         password: hashedPassword, country: country, 
+         hashed_password: hashedPassword, country: countryId, 
          profile_picture: ""
       }
 
-      const response = await db_registrerUser(user);
+      const response = await db_registerUser(user);
 
       if (!response || !response.userId || !response.country) {
          return res.status(404).json({ 
             success: false, 
-            message: "Error al crear su cuenta de usuario. Inténtelo nuevamente" 
+            message: "Error on creating user account. Please try again." 
          });
       }
 
       const userData = parseRegisterFromDb(response);
 
-      // Verificar que la clave JWT existe
+      // Check if JWT secret key exists
       const jwtSecret = process.env.KEY;
       if (!jwtSecret) {
          throw new Error('JWT secret key not configured');
       }
-      
-      // Crear payload del JWT
+
+      // Create payload for JWT
       const payload: JWTPayload = {
          user: {
             uuid: userData.uuid,
@@ -195,7 +177,7 @@ export async function signup(req: Request, res: Response): Promise<Response> {
          }
       };
 
-      // Generar token
+      // Generate token
       const token: string = jwt.sign(payload, jwtSecret, { expiresIn: '1h' });
 
       return res.status(200).json({
@@ -203,8 +185,8 @@ export async function signup(req: Request, res: Response): Promise<Response> {
       });
 
    } catch (error) {
-      console.error('Ocurrio un error:',error);
-      return res.status(400).json({ error: "Error al crear su cuenta de usuario. Inténtelo nuevamente" });
+      console.error('An error occurred:',error);
+      return res.status(400).json({ error: "Error on creating user account. Please try again." });
    }
 }
 
@@ -223,8 +205,24 @@ export async function logout(req,res){
 export async function changeUserPassword(req: Request, res: Response): Promise<Response> {
    try {
       consoleLog("-----Cambiando contraseña-----");
-      const { password, uuid } = req.body;
-      const hashedPassword = await bcrypt.hash(password, 10);
+      // Validation with Zod
+      const validationResult = changePasswordSchema.safeParse(req.body);
+
+      if (!validationResult.success) {
+         const errors = validationResult.error.issues.map(err => ({
+            field: err.path.join('.'),
+            message: err.message
+         }));
+
+         return res.status(400).json({
+            success: false,
+            message: "Validation failed",
+            errors: errors
+         });
+      }
+
+      const { currentPassword, newPassword, confirmPassword, uuid } : ChangePasswordData = validationResult.data;
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
       const response = await db_changeUserPassword(uuid, hashedPassword)
 
       if (!response) {

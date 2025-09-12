@@ -27,6 +27,7 @@
             "@mappers/*": ["src/mappers/*"],
             "@interfaces/*": ["src/interfaces/*"],
             "@auth/*": ["src/auth/*"],
+            "@validations/*": ["src/validations/*"]
         }
     },
     "include": ["**/*.ts", "**/*.js"],
