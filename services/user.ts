@@ -95,6 +95,33 @@ async function db_getUserId(uuid) {
     };
 }
 
+
+async function db_checkUserExists(uuid) {
+    let userId = await db.execute({
+        sql: `
+        SELECT id FROM users WHERE uuid = ?
+        `,
+        args: [
+            uuid
+        ]
+    });
+
+    return {
+      userId: userId.rows.length > 0 ? userId.rows[0].id : null,
+    };
+}
+
+export async function db_updateUserProfilePicture(uuid, fileData){
+    const userExists = await db_checkUserExists(uuid);
+    if (!userExists || !userExists.userId) {
+        throw new Error("Usuario no encontrado");
+    }
+
+    const result = await db.execute("UPDATE users SET profile_picture = ? WHERE uuid = ?", [fileData, uuid]);
+
+    return result.rowsAffected > 0; // Devuelve true si se actualizó
+}
+
 // 1. Generate and store OTP code
 export async function db_generateOTP(email, code) {
     const user = await db_getUserUUID(email);
