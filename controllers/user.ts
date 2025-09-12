@@ -3,8 +3,8 @@ import bcrypt from 'bcrypt';
 import { Request, Response } from 'express';
 // Import interfaces
 import { User, Register, JWTPayload } from '@interfaces/user';
-import { signupSchema, loginSchema, changePasswordSchema } from '@validations/schemas';
-import { SignupData, LoginData, ChangePasswordData } from '@validations/types';
+import { signupSchema, loginSchema, changePasswordSchema, updateProfileSchema, fileSchema } from '@validations/schemas';
+import { SignupData, LoginData, ChangePasswordData, UpdateProfileData, FileData } from '@validations/types';
 
 // ------ Import schemas and mapping functions ------
 // Google
@@ -19,7 +19,8 @@ import { mapGithubToDB } from "@mappers/githubToDB";
 // Import utils y services
 import { email_OTP } from "@utils/emails.ts";
 import { consoleLog, generateRandomOTP } from "@utils/helpers.ts";
-import { db_registerUser, db_authenticateUser, db_changeUserPassword, db_generateOTP, db_validateOTP, db_markOTPUsed, db_registerOAuthUser } from "@services/user.js";
+import { db_registerUser, db_authenticateUser, db_changeUserPassword, db_generateOTP, db_validateOTP, 
+   db_markOTPUsed, db_registerOAuthUser, db_updateUserProfilePicture } from "@services/user.js";
 
 // Helper function para convertir datos de LibSQL
 function parseUserFromDb(dbUser: any): User {
@@ -235,6 +236,77 @@ export async function changeUserPassword(req: Request, res: Response): Promise<R
       res.status(401).json({ success: false });
    }
 }
+
+// export async function updateProfile(req: Request, res: Response): Promise<Response> {
+//    try {
+//       consoleLog("-----Actualizando perfil-----");
+//       // Validation with Zod
+//       const validationResult = updateProfileSchema.safeParse(req.body);
+
+//       if (!validationResult.success) {
+//          const errors = validationResult.error.issues.map(err => ({
+//             field: err.path.join('.'),
+//             message: err.message
+//          }));
+
+//          return res.status(400).json({
+//             success: false,
+//             message: "Validation failed",
+//             errors: errors
+//          });
+//       }
+
+//       const { name, lastname, countryId } : UpdateProfileData = validationResult.data;
+//       const response = await db_updateUserProfile(req.user.id, { name, lastname, countryId });
+
+//       if (!response) {
+//          return res.status(401).json({ success: false, message: "No se pudo actualizar la contraseña" })
+//       }
+//       return res.status(200).json({ success: true })
+//    } catch (error) {
+//       console.error(error);
+//       // Enviar respuesta JSON indicando fallo
+//       res.status(401).json({ success: false });
+//    }
+// }
+
+export async function updateProfilePicture(req: Request, res: Response): Promise<Response> {
+   try {
+      consoleLog("-----Actualizando foto de perfil-----");
+      // Validation with Zod
+      const validationResult = fileSchema.safeParse(req.body.file);
+
+      if (!validationResult.success) {
+         const errors = validationResult.error.issues.map(err => ({
+            field: err.path.join('.'),
+            message: err.message
+         }));
+
+         return res.status(400).json({
+            success: false,
+            message: "Validation failed",
+            errors: errors
+         });
+      }
+
+      const { originalname, mimetype, size, uuid } : FileData = validationResult.data;
+      // Agregar multer middleware para manejar la subida de archivos
+
+
+      const response = await db_updateUserProfilePicture(uuid, { originalname, mimetype, size, uuid });
+
+      if (!response) {
+         return res.status(401).json({ success: false, message: "No se pudo actualizar la foto de perfil" })
+      }
+      return res.status(200).json({ success: true })
+   } catch (error) {
+      console.error(error);
+      // Enviar respuesta JSON indicando fallo
+      res.status(401).json({ success: false });
+   }
+}
+
+
 
 export async function generateOTP(req: Request, res: Response): Promise<Response> {
    try {
