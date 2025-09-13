@@ -1,5 +1,5 @@
 import express from 'express';
-import { obtenerPrecioExacto } from '../controllers/investments.js';
+import { obtenerPrecioExacto } from '@controllers/investments.js';
 
 const router = express.Router();
 

@@ -1,5 +1,5 @@
 import express from 'express';
-import { login, signup } from '../controllers/user.js';
+import { login, signup } from '@controllers/user.js';
 import { validateBody } from '@validations/middleware.js';
 import { schemas } from '@validations/schemas.js';
 
