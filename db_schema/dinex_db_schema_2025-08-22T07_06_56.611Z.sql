@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS "instruments_types_catalog" (
 	"id" INTEGER NOT NULL UNIQUE,
 	"name" TEXT NOT NULL,
+	"color" TEXT,
 	PRIMARY KEY("id")
 );
 
@@ -8,6 +9,7 @@ CREATE TABLE IF NOT EXISTS "instruments_subtypes_catalog" (
 	"id" INTEGER NOT NULL UNIQUE,
 	"id_instrument_type" INTEGER NOT NULL,
 	"name" TEXT NOT NULL,
+	"color" TEXT,
 	PRIMARY KEY("id"),
 	FOREIGN KEY ("id_instrument_type") REFERENCES "instruments_types_catalog"("id")
 	ON UPDATE NO ACTION ON DELETE NO ACTION
@@ -184,21 +186,44 @@ CREATE TABLE IF NOT EXISTS "incomes" (
 CREATE TABLE IF NOT EXISTS "investments" (
 	"id" INTEGER NOT NULL UNIQUE,
 	"user_id" INTEGER,
-	"id_instrument" INTEGER,
+	"id_instrument" INTEGER, -- puede vincular a instrumentos bursátiles, bonos, etc.
 	"investment_type" INTEGER,
 	"operation_amount" NUMERIC,
 	"operation_currency" TEXT,
-	"local_amount" NUMERIC,
+	"local_currency_amount" NUMERIC,
 	"exchange_rate" NUMERIC,
 	"investment_date" TEXT,
 	"registration_date" TEXT,
 	PRIMARY KEY("id"),
 	FOREIGN KEY ("investment_type") REFERENCES "investments_types_catalog"("id")
-	ON UPDATE NO ACTION ON DELETE NO ACTION,
+		ON UPDATE NO ACTION ON DELETE NO ACTION,
 	FOREIGN KEY ("user_id") REFERENCES "users"("id")
-	ON UPDATE NO ACTION ON DELETE NO ACTION,
+		ON UPDATE NO ACTION ON DELETE NO ACTION,
 	FOREIGN KEY ("id_instrument") REFERENCES "instruments"("id")
-	ON UPDATE NO ACTION ON DELETE NO ACTION
+		ON UPDATE NO ACTION ON DELETE NO ACTION
 );
 
+CREATE TABLE IF NOT EXISTS "stocks_catalog" (
+	"id" INTEGER PRIMARY KEY,
+	"ticker_symbol" TEXT NOT NULL UNIQUE,       -- Ej: AAPL, TSLA, VOO
+	"company_name" TEXT NOT NULL,               -- Ej: Apple Inc.
+	"logo_url" TEXT,                            -- URL al ícono/logo
+	"market" TEXT,                              -- Ej: NASDAQ, NYSE, BMV
+	"sector" TEXT,                              -- Ej: Tecnología, Consumo, Finanzas
+	"industry" TEXT,                            -- Ej: Semiconductores, Retail, Bancos
+	"isin" TEXT,                                -- Código internacional
+	"country" TEXT,                             -- País de cotización
+	"currency" TEXT                             -- USD, MXN, EUR, etc.
+);
 
+CREATE TABLE IF NOT EXISTS "equity_positions" (
+	"id" INTEGER PRIMARY KEY,
+	"investment_id" INTEGER NOT NULL,
+	"stock_id" INTEGER NOT NULL,
+	"quantity" NUMERIC NOT NULL, -- Número de acciones o unidades títulos
+	"operation_amount" NUMERIC,
+	FOREIGN KEY ("investment_id") REFERENCES "investments"("id")
+		ON UPDATE CASCADE ON DELETE CASCADE,
+	FOREIGN KEY ("stock_id") REFERENCES "stocks_catalog"("id")
+		ON UPDATE CASCADE ON DELETE RESTRICT
+);

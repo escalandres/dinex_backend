@@ -7,7 +7,13 @@ INSERT INTO investments_types_catalog (name, category, liquidity, is_fiscal, des
 ('Bienes raíces', 'real', 'baja', 1, 'Compra directa de propiedades'),
 ('Criptomonedas', 'capital', 'alta', 0, 'Activos digitales descentralizados'),
 ('Oro físico', 'real', 'baja', 0, 'Inversión en metales preciosos'),
-('Fondos mutuos', 'capital', 'media', 1, 'Fondos gestionados por profesionales');
+('Fondos mutuos', 'capital', 'media', 1, 'Fondos gestionados por profesionales'),
+('Plan de inversión', 'capital', 'media', 1, 'Plan de inversión a largo plazo'),
+('Crowdfunding inmobiliario', 'capital', 'baja', 1, 'Inversión colectiva en bienes raíces'),
+('P2P lending', 'deuda', 'media', 0, 'Préstamos entre particulares a través de plataformas'),
+('Afore', 'capital', 'baja', 1, 'Cuenta para el retiro administrada por instituciones financieras'),
+('Cuentas de ahorro/inversión', 'deuda', 'alta', 1, 'Cuentas bancarias con rendimientos'),
+('Planes de pensiones privados', 'capital', 'baja', 1, 'Planes de ahorro para el retiro gestionados por entidades privadas');
 
 INSERT INTO income_sources_catalog (source, type, description) VALUES
 ('Salario', 'fijo', 'Ingreso regular por empleo formal'),
