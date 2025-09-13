@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import { Request, Response } from 'express';
 // Import interfaces
-import { User, Register, JWTPayload } from '@interfaces/user';
+import { User, Register, JWTPayload, JWTPayloadVerify } from '@interfaces/user';
 import { signupSchema, loginSchema, changePasswordSchema, updateProfileSchema, fileSchema } from '@validations/schemas';
 import { SignupData, LoginData, ChangePasswordData, UpdateProfileData, FileData } from '@validations/types';
 
@@ -17,7 +17,7 @@ import { GithubUserSchema, GithubUser } from "@schemas/github";
 import { mapGithubToDB } from "@mappers/githubToDB";
 
 // Import utils y services
-import { email_OTP } from "@utils/emails.ts";
+import { email_OTP, email_verify } from "@utils/emails.ts";
 import { consoleLog, generateRandomOTP } from "@utils/helpers.ts";
 import { db_registerUser, db_authenticateUser, db_changeUserPassword, db_generateOTP, db_validateOTP, 
    db_markOTPUsed, db_registerOAuthUser, db_updateUserProfilePicture } from "@services/user.js";
@@ -101,7 +101,9 @@ export async function login(req: Request, res: Response): Promise<Response> {
             lastname: userData.lastname,
             profile_picture: userData.profile_picture,
             country: userData.country
-         }
+         },
+         purpose: 'authentication',
+         issuedAt: Date.now(),
       };
 
       // Generate token
@@ -148,18 +150,18 @@ export async function signup(req: Request, res: Response): Promise<Response> {
          hashed_password: hashedPassword, country: countryId, 
          profile_picture: ""
       }
-
+      console.log("User to register:", user);
       const response = await db_registerUser(user);
 
-      if (!response || !response.userId || !response.country) {
+      if (!response || !response.uuid || !response.country) {
          return res.status(404).json({ 
             success: false, 
             message: "Error on creating user account. Please try again." 
          });
       }
-
+      console.log("response:", response);
       const userData = parseRegisterFromDb(response);
-
+      console.log("userData:", userData);
       // Check if JWT secret key exists
       const jwtSecret = process.env.KEY;
       if (!jwtSecret) {
@@ -175,11 +177,27 @@ export async function signup(req: Request, res: Response): Promise<Response> {
             lastname: user.lastname,
             profile_picture: user.profile_picture,
             country: userData.country
-         }
+         },
+         purpose: 'authentication',
+         issuedAt: Date.now(),
       };
 
       // Generate token
       const token: string = jwt.sign(payload, jwtSecret, { expiresIn: '1h' });
+
+      // ---------- Send verification email ----------
+      // Create payload for JWT
+      const verifyPayload: JWTPayloadVerify = {
+         uuid: userData.uuid,
+         purpose: 'email_verification',
+         issuedAt: Date.now(),
+      };
+
+      // Generate token
+      const verifyToken: string = jwt.sign(verifyPayload, jwtSecret, { expiresIn: '1d' });
+
+      await email_verify(user.email, user.name, verifyToken);
+
 
       return res.status(200).json({
          token: token 
@@ -305,8 +323,6 @@ export async function updateProfilePicture(req: Request, res: Response): Promise
       res.status(401).json({ success: false });
    }
 }
-
-
 
 export async function generateOTP(req: Request, res: Response): Promise<Response> {
    try {

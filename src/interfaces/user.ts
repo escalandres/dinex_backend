@@ -22,4 +22,12 @@ export interface JWTPayload {
         profile_picture?: string;
         country: object;
     };
+    purpose: string;
+    issuedAt: number; // timestamp of token issuance
+}
+
+export interface JWTPayloadVerify {
+    uuid: string;
+    purpose: string;
+    issuedAt: number; // timestamp of token issuance
 }

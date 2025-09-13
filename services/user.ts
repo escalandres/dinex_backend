@@ -4,7 +4,7 @@ import db from './db.js';
 export async function db_registerUser(userData) {
     await db.execute({
         sql: `
-        INSERT INTO usuarios (email, name, lastname, oauth_provider, oauth_user_id, email_verified, profile_picture, created_date, last_login, hashed_password, country)
+        INSERT INTO users (email, name, lastname, oauth_provider, oauth_user_id, email_verified, profile_picture, created_date, last_login, hashed_password, country)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `,
         args: [
@@ -15,16 +15,16 @@ export async function db_registerUser(userData) {
             userData.oauth_user_id || '',    // oauth_user_id
             false,                           // email_verified
             userData.profile_picture || "",  // profile_picture
-            Date.now(),                      // created_date
-            Date.now(),                      // last_login
+            new Date().toISOString().split('.')[0] + 'Z',                      // created_date
+            new Date().toISOString().split('.')[0] + 'Z',                      // last_login
             userData.hashed_password || "",   // hashed_password
             userData.country                   // country
         ]
     });
 
-    let userId = await db.execute({
+    let uuid = await db.execute({
         sql: `
-          SELECT id from users WHERE email = ?
+          SELECT uuid from users WHERE email = ?
         `,
         args: [
             userData.email,
@@ -41,17 +41,20 @@ export async function db_registerUser(userData) {
     });
 
     return {
-      userId: userId.rows.length > 0 ? userId.rows[0].id : null,
+      uuid: uuid.rows.length > 0 ? uuid.rows[0].uuid : null,
       country: countryData.rows.length > 0 ? countryData.rows[0] : null
     };
 }
 
 export async function db_authenticateUser(email){
     // Consultar el usuario por email
-    const usuarios = await db.execute("SELECT email, hashed_password FROM usuarios WHERE email = ?", [email]);
-    console.log("Usuarios:", usuarios.rows);
+    const users = await db.execute("SELECT email, hashed_password FROM users WHERE email = ?", [email]);
+    if (users.rows.length !== 0) {
+        await db.execute("UPDATE users SET last_login = ? WHERE email = ?", [new Date().toISOString().split('.')[0] + 'Z', email]);
+    }
+    console.log("users:", users.rows);
 
-    return usuarios.rows.length > 0 ? usuarios.rows[0] : null;
+    return users.rows.length > 0 ? users.rows[0] : null;
 }
 
 export async function db_changeUserPassword(email, newPassword){
