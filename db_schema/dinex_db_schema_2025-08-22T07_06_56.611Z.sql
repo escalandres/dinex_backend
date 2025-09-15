@@ -227,3 +227,13 @@ CREATE TABLE IF NOT EXISTS "equity_positions" (
 	FOREIGN KEY ("stock_id") REFERENCES "stocks_catalog"("id")
 		ON UPDATE CASCADE ON DELETE RESTRICT
 );
+
+CREATE TABLE IF NOT EXISTS "csrf_tokens" (
+	"csrf_token" TEXT PRIMARY KEY,
+	"user_id" INTEGER NOT NULL,
+	"jti" TEXT NOT NULL,
+	"created_at" NUMERIC DEFAULT CURRENT_TIMESTAMP,
+	"expires_at" NUMERIC,
+	"revoked" BOOLEAN DEFAULT 0,
+	FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE
+);
