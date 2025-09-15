@@ -1,8 +1,9 @@
 import jwt from 'jsonwebtoken';
+import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcrypt';
 import { Request, Response } from 'express';
 // Import interfaces
-import { User, Register, JWTPayload, JWTPayloadVerify } from '@interfaces/user';
+import { User, Register, JWTPayload, JWTPayloadVerify, Authenticate } from '@interfaces/user';
 import { signupSchema, loginSchema, changePasswordSchema, updateProfileSchema, fileSchema } from '@validations/schemas';
 import { SignupData, LoginData, ChangePasswordData, UpdateProfileData, FileData } from '@validations/types';
 
@@ -20,9 +21,25 @@ import { mapGithubToDB } from "@mappers/githubToDB";
 import { email_OTP, email_verify } from "@utils/emails.ts";
 import { consoleLog, generateRandomOTP } from "@utils/helpers.ts";
 import { db_registerUser, db_authenticateUser, db_changeUserPassword, db_generateOTP, db_validateOTP, 
-   db_markOTPUsed, db_registerOAuthUser, db_updateUserProfilePicture } from "@services/user.js";
+   db_markOTPUsed, db_registerOAuthUser, db_updateUserProfilePicture, 
+   db_getUserData,
+   db_getUserDataByUUID} from "@services/user.js";
+
+import { createAuthTokens, getAccessTokenFromHeader, revokedCSRFToken, verifyAccessToken } from '@auth/config/users.js';
+import { cs } from 'zod/locales';
+
+const ACCESS_SECRET = process.env.ACCESS_SECRET as string;
+const REFRESH_SECRET = process.env.REFRESH_SECRET as string;
 
 // Helper function para convertir datos de LibSQL
+function parseAuthFromDb(dbUser: any): Authenticate {
+   return {
+      email: String(dbUser.email),
+      hashedPassword: String(dbUser.hashed_password),
+      uuid: String(dbUser.uuid)
+   };
+}
+
 function parseUserFromDb(dbUser: any): User {
    return {
       uuid: String(dbUser.uuid),
@@ -31,7 +48,8 @@ function parseUserFromDb(dbUser: any): User {
       lastname: String(dbUser.lastname),
       hashedPassword: String(dbUser.hashedPassword),
       profile_picture: String(dbUser.profile_picture),
-      country: Object(dbUser.country)
+      country: Object(dbUser.country),
+      email_verified: Boolean(dbUser.email_verified)
    };
 }
 
@@ -44,6 +62,8 @@ function parseRegisterFromDb(dbUser: any): Register {
 
 export async function login(req: Request, res: Response): Promise<Response> {
    try {
+      consoleLog("-----Iniciando sesión-----");
+      consoleLog("Datos de la solicitud:", req.body);
       // Validation with Zod
       const validationResult = loginSchema.safeParse(req.body);
 
@@ -63,56 +83,61 @@ export async function login(req: Request, res: Response): Promise<Response> {
       const { email, password } : LoginData = validationResult.data;
       // Authenticate user
       const result = await db_authenticateUser(email);
-      
-      if (!result || !result.success) {
+      console.log("Authentication result:", result);
+      if (!result) {
          return res.status(404).json({ 
             success: false, 
             message: "The user does not exist" 
          });
       }
-      
-      if (!result.user) {
-         return res.status(404).json({ 
-         success: false, 
-         message: "User data not found" 
-         });
-      }
-      
-      const userData = parseUserFromDb(result.user);
+
+      const userData = parseAuthFromDb(result);
+      console.log("userData:", userData);
       if (!bcrypt.compareSync(password, userData.hashedPassword)) {
+         console.log("Invalid password");
          return res.status(404).json({
             success: false,
             message: "The password is invalid"
          });
       }
-      
-      // Check if JWT secret key exists
-      const jwtSecret = process.env.KEY;
-      if (!jwtSecret) {
-         throw new Error('JWT secret key not configured');
-      }
+
+      const fullUserDataResult = await db_getUserData(email);
+      const userDataFull = parseUserFromDb(fullUserDataResult);
+      console.log("userDataFull:", userDataFull);
 
       // Create payload for JWT
       const payload: JWTPayload = {
          user: {
-            uuid: userData.uuid,
-            email: userData.email,
-            name: userData.name,
-            lastname: userData.lastname,
-            profile_picture: userData.profile_picture,
-            country: userData.country
+            uuid: userDataFull.uuid,
+            email: userDataFull.email,
+            name: userDataFull.name,
+            lastname: userDataFull.lastname,
+            profile_picture: userDataFull.profile_picture,
+            country: userDataFull.country,
+            email_verified: userDataFull.email_verified
          },
          purpose: 'authentication',
          issuedAt: Date.now(),
       };
 
       // Generate token
-      const token: string = jwt.sign(payload, jwtSecret, { expiresIn: '1h' });
+      // const token: string = jwt.sign(payload, ACCESS_SECRET, { expiresIn: '24h' });
+      // const refreshToken: string = jwt.sign({ uuid: userDataFull.uuid, jti: uuidv4(), }, REFRESH_SECRET, { expiresIn: '1d' });
+      const { accessToken: token, refreshToken, csrfToken } = await createAuthTokens(payload, userDataFull.uuid);
 
-      return res.status(200).json({ 
-         success: true, 
-         token: token 
-      });
+      return res
+         .cookie('refreshToken', refreshToken, {
+            httpOnly: true,       // 🔐 No accesible desde JavaScript
+            secure: process.env.NODE_ENV === 'production',         // 🔒 Solo se envía por HTTPS
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',   // 🛡️ Protege contra CSRF
+            maxAge: 1 * 24 * 60 * 60 * 1000, // 1 día
+         })
+         .status(200)
+         .json({ 
+            success: true, 
+            token: token,
+            csrfToken: csrfToken
+         });
       
    } catch (error) {
       console.error('Ocurrió un error:', error);
@@ -159,14 +184,8 @@ export async function signup(req: Request, res: Response): Promise<Response> {
             message: "Error on creating user account. Please try again." 
          });
       }
-      console.log("response:", response);
+
       const userData = parseRegisterFromDb(response);
-      console.log("userData:", userData);
-      // Check if JWT secret key exists
-      const jwtSecret = process.env.KEY;
-      if (!jwtSecret) {
-         throw new Error('JWT secret key not configured');
-      }
 
       // Create payload for JWT
       const payload: JWTPayload = {
@@ -176,14 +195,14 @@ export async function signup(req: Request, res: Response): Promise<Response> {
             name: user.name,
             lastname: user.lastname,
             profile_picture: user.profile_picture,
-            country: userData.country
+            country: userData.country,
+            email_verified: false
          },
          purpose: 'authentication',
          issuedAt: Date.now(),
       };
 
-      // Generate token
-      const token: string = jwt.sign(payload, jwtSecret, { expiresIn: '1h' });
+      const { accessToken, refreshToken, csrfToken } = await createAuthTokens(payload, userData.uuid);
 
       // ---------- Send verification email ----------
       // Create payload for JWT
@@ -192,17 +211,22 @@ export async function signup(req: Request, res: Response): Promise<Response> {
          purpose: 'email_verification',
          issuedAt: Date.now(),
       };
-
-      // Generate token
-      const verifyToken: string = jwt.sign(verifyPayload, jwtSecret, { expiresIn: '1d' });
-
+      const verifyToken: string = jwt.sign(verifyPayload, ACCESS_SECRET, { expiresIn: '1d' });
       await email_verify(user.email, user.name, verifyToken);
+      // ---------------------------------------------
 
-
-      return res.status(200).json({
-         token: token 
-      });
-
+      return res
+         .cookie('refreshToken', refreshToken, {
+            httpOnly: true,       // 🔐 No accesible desde JavaScript
+            secure: true,         // 🔒 Solo se envía por HTTPS
+            sameSite: 'none',   // 🛡️ Protege contra CSRF
+            maxAge: 1 * 24 * 60 * 60 * 1000, // 1 día
+         })
+         .status(200)
+         .json({
+            token: accessToken,
+            csrfToken: csrfToken,
+         });
    } catch (error) {
       console.error('An error occurred:',error);
       return res.status(400).json({ error: "Error on creating user account. Please try again." });
@@ -210,16 +234,86 @@ export async function signup(req: Request, res: Response): Promise<Response> {
 }
 
 export async function logout(req,res){
+   const accessToken = getAccessTokenFromHeader(req);
+   const decoded = verifyAccessToken(accessToken);
+   const csrfToken = req.headers['x-csrf-token'];
+
+   if (!decoded) {
+      return res.status(401).json({ message: 'Token de acceso inválido' });
+   }
+
+   const decodedPayload = decoded as JWTPayload;
+
+   await revokedCSRFToken(csrfToken, decodedPayload.user.uuid);
    // Destruir la sesión y redirigir a la página de inicio de sesión
-   req.session.destroy((err) => {
-      if (err) {
-         console.error('Error al destruir la sesión:', err);
-         return res.status(500).json({success: false, message: "Ha ocurrido un error con su petición. Inténtelo nuevamente"})
-      }
-      res.clearCookie('AuthToken');
-      return res.status(200).json({success: true})
-   });
+   res
+      .clearCookie('refreshToken', {
+         httpOnly: true,
+         secure: process.env.NODE_ENV === 'production',
+         sameSite: 'none',
+      })
+      .status(200)
+      .json({ success: true, message: 'Sesión cerrada correctamente' });
 }
+
+export const refreshTokenHandler = async (req: Request, res: Response) => {
+   const _refreshToken = req.cookies.refreshToken;
+
+   if (!_refreshToken) {
+      return res.status(401).json({ success: false, message: 'No se encontró el refresh token' });
+   }
+
+   try {
+      // ✅ Validar el refresh token
+      const payload = jwt.verify(_refreshToken, REFRESH_SECRET) as { uuid: string };
+
+      // 🧠 Obtener el usuario
+      const user = await db_getUserDataByUUID(payload.uuid);
+      if (!user) {
+         return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+      }
+
+      const userData = parseUserFromDb(user);
+
+      // Create payload for JWT
+      const newPayload: JWTPayload = {
+         user: {
+            uuid: userData.uuid,
+            email: userData.email,
+            name: userData.name,
+            lastname: userData.lastname,
+            profile_picture: userData.profile_picture,
+            country: userData.country,
+            email_verified: userData.email_verified
+         },
+         purpose: 'authentication',
+         issuedAt: Date.now(),
+      };
+
+      // // Generate token
+      // const newAccessToken: string = jwt.sign(newPayload, ACCESS_SECRET, { expiresIn: '1d' });
+
+      // // Rotar refresh token
+      // const newRefreshToken: string = jwt.sign({ uuid: userData.uuid, jti: uuidv4(), }, REFRESH_SECRET, { expiresIn: '1d' });
+
+      const { accessToken, refreshToken, csrfToken } = await createAuthTokens(newPayload, newPayload.user.uuid);
+
+      // 🍪 Actualizar la cookie y 📦 Enviar nuevo access token
+      return res
+         .cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'none',
+            maxAge: 1 * 24 * 60 * 60 * 1000, // 1 día
+         })
+         .status(200)
+         .json({ success: true, accessToken, csrfToken });
+   } catch (err) {
+      console.error('Error al refrescar token:', err);
+      return res.status(401).json({ success: false, message: 'Refresh token inválido o expirado' });
+   }
+};
+
 
 export async function changeUserPassword(req: Request, res: Response): Promise<Response> {
    try {

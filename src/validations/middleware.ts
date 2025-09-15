@@ -8,43 +8,53 @@ interface RequestWithValidatedData<T = any> extends Request {
     validatedParams?: T;
 }
 
-// Middleware para validar body
+// Middleware defensivo para validar el body con Zod
 export const validateBody = <T>(schema: z.ZodSchema<T>) => {
-    return (req: RequestWithValidatedData, res: Response, next: NextFunction) => {
+    return (req: RequestWithValidatedData<T>, res: Response, next: NextFunction) => {
         try {
+            // Validación previa: asegurar que el body exista
+            if (!req.body || typeof req.body !== 'object') {
+                return res.status(400).json({
+                success: false,
+                message: 'Missing or invalid request body'
+            });
+        }
+
+        // Validación con Zod
         const validationResult = schema.safeParse(req.body);
-        
+
         if (!validationResult.success) {
             const errors = validationResult.error.issues.map(err => ({
             field: err.path.join('.'),
             message: err.message,
             code: err.code
             }));
-            
+
+            // Logging opcional para trazabilidad
+            console.warn('Validation failed:', errors);
+
             return res.status(400).json({
             success: false,
-            message: "Validation failed",
-            errors: errors
+            message: 'Validation failed',
+            errors
             });
         }
-        
-        // Opción 1: Reemplazar req.body (funciona bien)
-        req.body = validationResult.data;
-        
-        // Opción 2: Agregar a un campo custom (más type-safe)
-        // req.validatedBody = validationResult.data;
-        
+
+        // Propagar datos validados de forma segura
+        req.validatedBody = validationResult.data;
+
         next();
-        
         } catch (error) {
         console.error('Validation middleware error:', error);
         return res.status(500).json({
             success: false,
-            message: "Internal validation error"
+            message: 'Internal validation error'
         });
         }
     };
 };
+
+
 
 // Middleware para query - versión simplificada
 export const validateQuery = <T>(schema: z.ZodSchema<T>) => {

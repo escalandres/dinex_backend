@@ -1,5 +1,4 @@
-import { uuid, z } from 'zod';
-
+import { z } from 'zod';
 // Schema for registration
 export const signupSchema = z.object({
     email: z.string()
@@ -34,6 +33,7 @@ export const signupSchema = z.object({
 export const loginSchema = z.object({
     email: z.string()
         .email("Email must be a valid email address")
+        .min(1, "Email is required")
         .transform(val => val.toLowerCase().trim()),
     password: z.string()
         .min(1, "Password is required")

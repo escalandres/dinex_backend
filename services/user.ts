@@ -49,8 +49,27 @@ export async function db_registerUser(userData) {
 export async function db_authenticateUser(email){
     // Consultar el usuario por email
     const users = await db.execute("SELECT email, hashed_password FROM users WHERE email = ?", [email]);
+    console.log("users:", users.rows);
+
+    return users.rows.length > 0 ? users.rows[0] : null;
+}
+
+export async function db_getUserData(email){
+    // Consultar el usuario por email
+    const users = await db.execute("SELECT * FROM users WHERE email = ?", [email]);
     if (users.rows.length !== 0) {
         await db.execute("UPDATE users SET last_login = ? WHERE email = ?", [new Date().toISOString().split('.')[0] + 'Z', email]);
+    }
+    console.log("users:", users.rows);
+
+    return users.rows.length > 0 ? users.rows[0] : null;
+}
+
+export async function db_getUserDataByUUID(uuid){
+    // Consultar el usuario por UUID
+    const users = await db.execute("SELECT * FROM users WHERE uuid = ?", [uuid]);
+    if (users.rows.length !== 0) {
+        await db.execute("UPDATE users SET last_login = ? WHERE uuid = ?", [new Date().toISOString().split('.')[0] + 'Z', uuid]);
     }
     console.log("users:", users.rows);
 
@@ -83,7 +102,7 @@ async function db_getUserUUID(email) {
     };
 }
 
-async function db_getUserId(uuid) {
+export async function db_getUserId(uuid) {
     let userId = await db.execute({
         sql: `
         SELECT id FROM users WHERE uuid = ?

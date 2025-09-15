@@ -6,6 +6,13 @@ export interface User {
     hashedPassword: string;
     profile_picture?: string;
     country: object;
+    email_verified: boolean;
+}
+
+export interface Authenticate {
+    email: string;
+    hashedPassword: string;
+    uuid: string;
 }
 
 export interface Register {
@@ -21,6 +28,7 @@ export interface JWTPayload {
         lastname: string;
         profile_picture?: string;
         country: object;
+        email_verified: boolean;
     };
     purpose: string;
     issuedAt: number; // timestamp of token issuance

@@ -93,10 +93,10 @@ app.get('/paises/icon', async (req: Request, res: Response) => {
 });
 
 // Use routes
-app.use('/user', userRoutes);
-app.use('/app/investments', investmentsRoute);
-app.use('/app/instruments', instrumentsRoute);
-app.use('/app/catalogs', catalogsRoute);
+app.use('/users', userRoutes);
+app.use('/investments', investmentsRoute);
+app.use('/instruments', instrumentsRoute);
+app.use('/catalogs', catalogsRoute);
 
 // Start server
 const PORT: string | number = process.env.PORT || 3000;
