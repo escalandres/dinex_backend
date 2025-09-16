@@ -1,112 +1,285 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Código de verificación - Dinex</title>
     <style>
-        body{
-            color:rgba(0,0,0,0.87);
-            width: 50%;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        .center-icon{
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px 0;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Contenedor principal centrado y responsive */
+        .container {
+            max-width: 600px;
+            width: 90%;
+            margin: 0 auto;
+            background-color: white;
+            border: 1px solid #dadce0;
+            border-radius: 12px;
+            padding: 40px 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Centrar el icono */
+        .center-icon {
             display: flex;
             justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .center-icon img {
+            display: block;
+        }
+
+        /* Título principal */
+        .container__main-text {
+            border-bottom: thin solid #dadce0;
+            color: rgba(0,0,0,0.87);
+            line-height: 32px;
+            padding-bottom: 24px;
+            text-align: center;
+            word-break: break-word;
             margin-bottom: 20px;
         }
-        .container{
-            border-style: solid;
-            border-width: thin;
-            border-color: #dadce0;
+
+        .container__main-text div {
+            font-size: 28px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        /* Texto del contenido */
+        .container__text {
+            font-family: Roboto-Regular, Helvetica, Arial, sans-serif;
+            font-size: 16px;
+            color: #555;
+            line-height: 24px;
+            text-align: left;
+        }
+
+        /* Código OTP destacado */
+        .otp-code {
+            text-align: center;
+            font-size: 42px;
+            font-weight: 700;
+            margin: 30px 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 8px;
+            font-family: 'Courier New', monospace;
+            border: 2px dashed #e0e0e0;
             border-radius: 8px;
-            padding: 40px 20px;
+            background-color: #f8f9ff;
         }
-        .container__main-text{
-            font-family:'Google Sans',Roboto,RobotoDraft,Helvetica,Arial,sans-serif;
-            border-bottom:thin solid #dadce0;
-            color:rgba(0,0,0,0.87);
-            line-height:32px;
-            padding-bottom:24px;
-            text-align:center;
-            word-break:break-word
+
+        /* Botón principal */
+        .button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin: 20px 0;
         }
-        .container__text{
-            font-family:Roboto-Regular,Helvetica,Arial,sans-serif;
-            font-size:14px;color:rgba(0,0,0,0.87);
-            line-height:20px;
-            padding-top:20px;
-            text-align:left
-        }
-        .button{
-            color:#ffffff!important;
-            cursor:pointer;
-            display:inline-block;
-            font-size:14px;
-            font-weight:500;
-            line-height:20px;
-            margin-top:20px;
-            padding:10px 24px;
-            text-align:center;
-            text-decoration:none;
-            background-color: rgb(79, 70, 229);
-            border: 1px solid #4f46e5!important;
-            border-radius: 0.5rem;
-            transition-duration: 150ms;
-            text-transform: none;
-        }
+
         .button:hover {
-            border-color: #646cff!important;
-            background-color: #646cff;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
         }
+
         .button:active {
             background-color: #4f46e5;
+            transform: translateY(0);
         }
-        .link{
-            color:#4f46e5!important;text-decoration: none;
+
+        /* Enlaces */
+        .link {
+            color: #4f46e5 !important;
+            text-decoration: underline;
         }
-        .link:hover{
-            color:#646cff!important;text-decoration: none;
+
+        .link:hover {
+            color: #646cff !important;
         }
-        .footer__text{
-            font-family:Roboto-Regular,Helvetica,Arial,sans-serif;
-            color:rgba(0,0,0,0.54);
-            font-size:11px;
-            line-height:18px;
-            padding-top:12px;
-            text-align:center
+
+        /* Footer */
+        .footer__text {
+            max-width: 600px;
+            width: 90%;
+            margin: 30px auto 0;
+            font-family: Roboto-Regular, Helvetica, Arial, sans-serif;
+            color: rgba(0,0,0,0.54);
+            font-size: 12px;
+            line-height: 18px;
+            padding: 20px;
+            text-align: center;
+            background-color: white;
+            border-radius: 8px;
+            border: 1px solid #f0f0f0;
+        }
+
+        .footer__text div {
+            margin-bottom: 8px;
+        }
+
+        .footer__text a {
+            color: #4f46e5;
+            text-decoration: none;
+        }
+
+        /* Responsive para tablets */
+        @media (max-width: 768px) {
+            body {
+                padding: 15px 0;
+            }
+
+            .container {
+                width: 95%;
+                padding: 30px 20px;
+                margin: 10px auto;
+            }
+
+            .container__main-text div {
+                font-size: 24px;
+            }
+
+            .container__text {
+                font-size: 15px;
+                line-height: 22px;
+            }
+
+            .otp-code {
+                font-size: 36px;
+                letter-spacing: 6px;
+                margin: 25px 0;
+            }
+
+            .button {
+                padding: 12px 24px;
+                font-size: 15px;
+                width: 100%;
+                margin: 15px 0;
+            }
+
+            .footer__text {
+                width: 95%;
+                padding: 15px;
+                font-size: 11px;
+            }
+        }
+
+        /* Para pantallas muy pequeñas */
+        @media (max-width: 480px) {
+            body {
+                padding: 10px 0;
+            }
+
+            .container {
+                width: 100%;
+                padding: 20px 15px;
+                border-radius: 8px;
+                margin: 5px auto;
+            }
+
+            .container__main-text div {
+                font-size: 22px;
+            }
+
+            .container__text {
+                font-size: 14px;
+                line-height: 20px;
+            }
+
+            .otp-code {
+                font-size: 32px;
+                letter-spacing: 4px;
+                margin: 20px 0;
+                padding: 15px;
+            }
+
+            .center-icon img {
+                width: 70px;
+                height: 52px;
+            }
+
+            .button {
+                padding: 12px 20px;
+                font-size: 14px;
+            }
+        }
+
+        /* Elemento destacado para spans importantes */
+        .highlight {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .center-button {
+            text-align: center;
+            margin: 25px 0;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="center-icon">
-            <img src="https://res.cloudinary.com/deudksu4e/image/upload/v1757791736/dinex_p8nj48.png" width="80" height="60" aria-hidden="true" style="margin-bottom:16px; margin: auto;" alt="Cosmos" class="CToWUd" data-bit="iit">
+            <img src="https://res.cloudinary.com/deudksu4e/image/upload/v1757791736/dinex_p8nj48.png" width="80" height="60" aria-hidden="true" alt="Dinex Logo" class="CToWUd" data-bit="iit">
         </div>
-        <div class="container__main-text"><div style="font-size:24px">Código de verificación</div></div>
+        
+        <div class="container__main-text">
+            <div>Código de verificación</div>
+        </div>
+        
         <div class="container__text">
-            Hemos recibido su solicitud para restaurar la contraseña de la cuenta <span style="font-weight:bold">{email}</span>.
-            <br>
-            <br>
-            Use este código para restablecer su contraseña:
-            <div style="text-align:center;font-size:36px;margin-top:20px;line-height:44px">{otp}</div>
-            <br>
-            Para restablecer su contraseña, haga clic en el botón de abajo, o ingrese con el siguiente <a class="link" href="http://localhost:3100/cambiar-contrasena">enlace</a>
-            <br>
-            <div style="text-align:center">
-                <a class="button" href="http://localhost:3100/cambiar-contrasena" type="submit">Recuperar contraseña</a>
-            </div>
-            <br>Este código expirará en <span style="font-weight:bold">30 minutos</span>.
+            Hemos recibido su solicitud para restaurar la contraseña de la cuenta <span class="highlight">{email}</span>.
             <br><br>
-            Si no solicitó restablecer su contraseña, por favor ignore este correo.</div>
+            Use este código para restablecer su contraseña:
+            
+            <div class="otp-code">{otp}</div>
+            
+            Para restablecer su contraseña, haga clic en el botón de abajo, o ingrese con el siguiente <a class="link" href="{url}">enlace</a>
+            
+            <div class="center-button">
+                <a class="button" href="{url}">Recuperar contraseña</a>
+            </div>
+            
+            Este código expirará en <span class="highlight">30 minutos</span>.
+            <br><br>
+            Si no solicitó restablecer su contraseña, por favor ignore este correo.
+        </div>
     </div>
-    <div style="text-align:left">
-        <div class="footer__text">
-            <div>
-                Usted recibió este correo para solicitar un cambio de contraseña de su cuenta.
-            </div>
-            <div style="direction:ltr">
-                © 2025 Dinex, <a  class="footer__text">Aplicación de gestión de finanzas personales</a>
-            </div>
+    
+    <div class="footer__text">
+        <div>
+            Usted recibió este correo para solicitar un cambio de contraseña de su cuenta.
+        </div>
+        <div>
+            © 2025 Dinex, <a href="#">Aplicación de gestión de finanzas personales</a>
         </div>
     </div>
 </body>

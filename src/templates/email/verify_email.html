@@ -1,105 +1,198 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Verifica tu cuenta - Dinex</title>
     <style>
-        body{
-            color:rgba(0,0,0,0.87);
-            width: 100%;
-            padding: 0;
+        * {
             margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        .center-icon{
-            display: flex;
-            justify-content: center;
-            margin-bottom: 20px;
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8f9fa;
+            line-height: 1.6;
+            color: #333;
+            padding: 20px 0;
+            min-height: 100dvh;
         }
-        .container{
-            border-style: solid;
-            border-width: thin;
-            border-color: #dadce0;
+
+        /* Contenedor principal centrado y responsive */
+        .container {
+            max-width: 600px;
+            width: 90%;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+        }
+
+        /* Centrar el icono */
+        .center-icon {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .center-icon img {
+            display: block;
+            margin: 0 auto;
+        }
+
+        /* Título principal */
+        .container__main-text {
+            text-align: center;
+            border-bottom: thin solid #dadce0;
+            margin-bottom: 30px;
+            line-height: 32px;
+            padding-bottom: 24px;
+        }
+
+        .container__main-text div {
+            font-size: 28px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        /* Texto del contenido */
+        .container__text {
+            font-size: 16px;
+            color: #555;
+            text-align: left;
+        }
+
+        /* Botón principal */
+        .button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            padding: 15px 30px;
             border-radius: 8px;
-            padding: 40px 20px;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin: 20px 0;
         }
-        .container__main-text{
-            font-family:'Google Sans',Roboto,RobotoDraft,Helvetica,Arial,sans-serif;
-            border-bottom:thin solid #dadce0;
-            color:rgba(0,0,0,0.87);
-            line-height:32px;
-            padding-bottom:24px;
-            text-align:center;
-            word-break:break-word
-        }
-        .container__text{
-            font-family:Roboto-Regular,Helvetica,Arial,sans-serif;
-            font-size:14px;color:rgba(0,0,0,0.87);
-            line-height:20px;
-            padding-top:20px;
-            text-align:left
-        }
-        .button{
-            color:#ffffff!important;
-            cursor:pointer;
-            display:inline-block;
-            font-size:14px;
-            font-weight:500;
-            line-height:20px;
-            margin-top:20px;
-            padding:10px 24px;
-            text-align:center;
-            text-decoration:none;
-            background-color: #2365EA;
-            border: 1px solid #2365EA!important;
-            border-radius: 0.2rem;
-            transition-duration: 150ms;
-            text-transform: none;
-        }
+
         .button:hover {
-            border-color: #1e54b7!important;
-            background-color: #1e54b7;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
         }
-        .button:active {
-            background-color: #2365EA;
+
+        /* Enlaces */
+        .link {
+            color: #667eea;
+            text-decoration: underline;
         }
-        .link{
-            color:#2365EA!important;text-decoration: none;
+
+        .link:hover {
+            color: #764ba2;
         }
-        .link:hover{
-            color:#2365EA!important;text-decoration: none;
+
+        /* Footer */
+        .footer__text {
+            max-width: 600px;
+            width: 90%;
+            margin: 30px auto 0;
+            padding: 20px;
+            font-size: 12px;
+            color: #888;
+            text-align: center;
+            background-color: white;
+            border-radius: 8px;
         }
-        .footer__text{
-            font-family:Roboto-Regular,Helvetica,Arial,sans-serif;
-            color:rgba(0,0,0,0.54);
-            font-size:11px;
-            line-height:18px;
-            padding-top:12px;
-            text-align:center
+
+        .footer__text a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .footer__text div {
+            margin-bottom: 10px;
+        }
+
+        /* Responsive para móviles */
+        @media (max-width: 768px) {
+            .container {
+                width: 95%;
+                padding: 25px 20px;
+                margin: 10px auto;
+            }
+
+            .container__main-text div {
+                font-size: 24px;
+            }
+
+            .container__text {
+                font-size: 15px;
+            }
+
+            .button {
+                padding: 12px 25px;
+                font-size: 13px;
+                width: 100%;
+                text-align: center;
+            }
+
+            .footer__text {
+                width: 95%;
+                padding: 15px;
+                margin-top: 20px;
+            }
+        }
+
+        /* Para pantallas muy pequeñas */
+        @media (max-width: 480px) {
+            body {
+                padding: 10px 0;
+            }
+
+            .container {
+                width: 100%;
+                padding: 20px 15px;
+                border-radius: 8px;
+                margin: 5px auto;
+            }
+
+            .container__main-text div {
+                font-size: 22px;
+            }
+
+            .center-icon img {
+                width: 70px;
+                height: 52px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="center-icon">
-            <img src="https://res.cloudinary.com/deudksu4e/image/upload/v1757791736/dinex_p8nj48.png" width="80" height="60" aria-hidden="true" style="margin-bottom:16px; margin: auto;" alt="Cosmos" class="CToWUd" data-bit="iit">
+            <img src="https://res.cloudinary.com/deudksu4e/image/upload/v1757791736/dinex_p8nj48.png" width="80" height="60" aria-hidden="true" alt="Dinex Logo" class="CToWUd" data-bit="iit">
         </div>
-        <div class="container__main-text"><div style="font-size:24px">Verifica tu cuenta</div></div>
+        <div class="container__main-text">
+            <div>Verifica tu cuenta</div>
+        </div>
         <div class="container__text">
             Hola {name},
-            <br>
+            <br><br>
             Gracias por registrarte en Dinex, tu plataforma de gestión de finanzas personales.
             <br>
             Para completar tu registro y activar tu cuenta, por favor verifica tu dirección de correo electrónico haciendo clic en el siguiente botón:
-            <br>
+            <br><br>
             <div style="text-align:center">
-                <a class="button" href="{url}" type="submit">VERIFICAR DIRECCIÓN DE CORREO ELECTRÓNICO</a>
+                <a class="button" href="{url}">VERIFICAR DIRECCIÓN DE CORREO ELECTRÓNICO</a>
             </div>
             <br>
-            <br>Este enlace es válido por <strong>24 horas</strong>. Si no realizaste esta solicitud, puedes ignorar este mensaje.
-            <br>
-            <br>
-            ¿Problemas con el botón? Copia y pega este enlace en tu navegador: {url}
+            Este enlace es válido por <strong>24 horas</strong>. Si no realizaste esta solicitud, puedes ignorar este mensaje.
+            <br><br>
+            ¿Problemas con el botón? haga clic en el siguiente <a class="link" href="{url}">enlace</a>
             <br><br>
             Gracias por confiar en nosotros.
             <br>
@@ -108,14 +201,13 @@
             📧 soporte@dinex.com
         </div>
     </div>
-    <div style="text-align:left">
-        <div class="footer__text">
-            <div>
-                Usted recibió este correo para utilizar esta dirección de correo electrónico para acceder a su cuenta de Dinex.
-            </div>
-            <div style="direction:ltr">
-                © 2025 Dinex, <a  class="footer__text">Aplicación de gestión de finanzas personales</a>
-            </div>
+    
+    <div class="footer__text">
+        <div>
+            Usted recibió este correo para utilizar esta dirección de correo electrónico para acceder a su cuenta de Dinex.
+        </div>
+        <div>
+            © 2025 Dinex, <a href="#">Aplicación de gestión de finanzas personales</a>
         </div>
     </div>
 </body>
