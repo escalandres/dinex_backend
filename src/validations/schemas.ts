@@ -117,6 +117,15 @@ export const fileSchema = z.object({
     uuid: z.string().uuid()
 });
 
+export const verifyEmailParamsSchema = z.object({
+    token: z
+        .string()
+        .min(32, { message: 'El token debe tener al menos 32 caracteres.' })
+        .max(128, { message: 'El token excede el tamaño permitido.' })
+        .regex(/^[a-zA-Z0-9-_]+$/, { message: 'Formato de token inválido.' })
+});
+
+
 // Group all schemas
 export const schemas = {
     signup: signupSchema,
@@ -124,5 +133,6 @@ export const schemas = {
     updateProfile: updateProfileSchema,
     changePassword: changePasswordSchema,
     oauth: oauthSchema,
-    file: fileSchema
+    file: fileSchema,
+    verifyEmailParams: verifyEmailParamsSchema
 };

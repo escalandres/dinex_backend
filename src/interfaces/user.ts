@@ -38,4 +38,5 @@ export interface JWTPayloadVerify {
     uuid: string;
     purpose: string;
     issuedAt: number; // timestamp of token issuance
+    exp?: number; // expiration time as a timestamp
 }

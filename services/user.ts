@@ -72,8 +72,29 @@ export async function db_getUserDataByUUID(uuid){
         await db.execute("UPDATE users SET last_login = ? WHERE uuid = ?", [new Date().toISOString().split('.')[0] + 'Z', uuid]);
     }
     console.log("users:", users.rows);
+    if (users.rows.length === 0) {
+        return null;
+    }
+    // Format the user data to include country details
+    const formatted = users.rows.map(row => ({
+      uuid: row.uuid,
+      name: row.name,
+      lastname: row.lastname,
+      profile_picture: row.profile_picture,
+      email_verified: row.email_verified === 1, // Convert to boolean
+      email: row.email,
+      country: {
+        id: row.country,
+        currency: row.currency,
+        country_iso_code: row.country_iso_code,
+        currency_symbol: row.currency_symbol,
+        currency_format: row.currency_format,
+        flag_icon: row.flag_icon,
+        language_code: row.language_code
+      }
+    }));
 
-    return users.rows.length > 0 ? users.rows[0] : null;
+    return formatted;
 }
 
 export async function db_changeUserPassword(email, newPassword){
@@ -117,6 +138,15 @@ export async function db_getUserId(uuid) {
     };
 }
 
+export async function db_verifyUserEmail(uuid) {
+    const userExists = await db_checkUserExists(uuid);
+    if (!userExists || !userExists.userId) {
+        throw new Error("Usuario no encontrado");
+    }
+    const result = await db.execute("UPDATE users SET email_verified = 1 WHERE uuid = ?", [uuid]);
+
+    return result.rowsAffected > 0; // Devuelve true si se actualizó
+}
 
 async function db_checkUserExists(uuid) {
     let userId = await db.execute({

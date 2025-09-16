@@ -22,14 +22,16 @@ import { email_OTP, email_verify } from "@utils/emails.ts";
 import { consoleLog, generateRandomOTP } from "@utils/helpers.ts";
 import { db_registerUser, db_authenticateUser, db_changeUserPassword, db_generateOTP, db_validateOTP, 
    db_markOTPUsed, db_registerOAuthUser, db_updateUserProfilePicture, 
-   db_getUserData,
+   db_getUserData, db_verifyUserEmail,
    db_getUserDataByUUID} from "@services/user.js";
 
 import { createAuthTokens, getAccessTokenFromHeader, revokedCSRFToken, verifyAccessToken } from '@auth/config/users.js';
-import { cs } from 'zod/locales';
+import user from '@routes/user';
+import { access } from 'fs';
 
 const ACCESS_SECRET = process.env.ACCESS_SECRET as string;
 const REFRESH_SECRET = process.env.REFRESH_SECRET as string;
+const VERIFY_EMAIL_SECRET = process.env.VERIFY_EMAIL_SECRET as string;
 
 // Helper function para convertir datos de LibSQL
 function parseAuthFromDb(dbUser: any): Authenticate {
@@ -211,7 +213,7 @@ export async function signup(req: Request, res: Response): Promise<Response> {
          purpose: 'email_verification',
          issuedAt: Date.now(),
       };
-      const verifyToken: string = jwt.sign(verifyPayload, ACCESS_SECRET, { expiresIn: '1d' });
+      const verifyToken: string = jwt.sign(verifyPayload, VERIFY_EMAIL_SECRET, { expiresIn: '1d' });
       await email_verify(user.email, user.name, verifyToken);
       // ---------------------------------------------
 
@@ -346,6 +348,129 @@ export async function changeUserPassword(req: Request, res: Response): Promise<R
       console.error(error);
       // Enviar respuesta JSON indicando fallo
       res.status(401).json({ success: false });
+   }
+}
+
+export async function verifyEmail(req: Request, res: Response): Promise<Response> {
+   try {
+      const { token } = req.params;
+      if (!token) return res.status(400).json({ success: false, message: "Token is required" });
+
+      const payload = jwt.verify(token, VERIFY_EMAIL_SECRET) as JWTPayloadVerify;
+      if (!payload || payload.purpose !== 'email_verification') return res.status(401).json({ success: false, message: "Invalid token" });
+
+      if (payload.purpose !== 'email_verification') {
+         return res.status(400).json({ success: false, message: "Invalid token purpose" });
+      }
+
+      const now = Math.floor(Date.now() / 1000);
+      if(payload.exp && now > payload.exp) {
+         return res.status(401).json({ success: false, message: "Token expired" });
+      }
+
+      const user = await db_getUserDataByUUID(payload.uuid);
+      if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+      const userDataFull = parseUserFromDb(user);
+      const newPayload: JWTPayload = {
+         user: {
+            uuid: userDataFull.uuid,
+            email: userDataFull.email,
+            name: userDataFull.name,
+            lastname: userDataFull.lastname,
+            profile_picture: userDataFull.profile_picture,
+            country: userDataFull.country,
+            email_verified: userDataFull.email_verified
+         },
+         purpose: 'authentication',
+         issuedAt: Date.now(),
+      };
+      const { accessToken, refreshToken, csrfToken } = await createAuthTokens(newPayload, userDataFull.uuid);
+
+      if (userDataFull.email_verified) {
+         return res
+               .cookie('refreshToken', refreshToken, {
+                  httpOnly: true,
+                  secure: process.env.NODE_ENV === 'production',
+                  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+               })
+               .status(200).json({ success: true, message: "Email is already verified", accessToken, csrfToken});
+      }
+
+      await db_verifyUserEmail(user.id);
+      return res
+            .cookie('refreshToken', refreshToken, {
+                  httpOnly: true,
+                  secure: process.env.NODE_ENV === 'production',
+                  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+               })
+            .status(200).json({ success: true, message: "Email verified successfully", accessToken, csrfToken });
+   } catch (error) {
+      console.error(error);
+      return res.status(500).json({ success: false, message: "Internal server error" });
+   }
+}
+
+export async function resendVerificationEmail(req: Request, res: Response): Promise<Response> {
+   try {
+      consoleLog("-----Reenviando email de verificación-----");
+      const authToken = getAccessTokenFromHeader(req);
+
+      if (!authToken) {
+         return res.status(401).json({ success: false, message: "Token no proporcionado" });
+      }
+
+      const payload = verifyAccessToken(authToken) as JWTPayload;
+
+      console.log("Payload from token:", payload);
+
+      const { email } = payload.user;
+
+      const fullUserDataResult = await db_getUserData(email);
+      const userDataFull = parseUserFromDb(fullUserDataResult);
+      console.log("userDataFull:", userDataFull);
+
+      if(userDataFull.email_verified) {
+         // Create payload for JWT
+         const payload: JWTPayload = {
+            user: {
+               uuid: userDataFull.uuid,
+               email: userDataFull.email,
+               name: userDataFull.name,
+               lastname: userDataFull.lastname,
+               profile_picture: userDataFull.profile_picture,
+               country: userDataFull.country,
+               email_verified: userDataFull.email_verified
+            },
+            purpose: 'authentication',
+            issuedAt: Date.now(),
+         };
+         // Generate token
+         const { accessToken, refreshToken, csrfToken } = await createAuthTokens(payload, userDataFull.uuid);
+
+         return res
+            .cookie('refreshToken', refreshToken, {
+               httpOnly: true,
+               secure: process.env.NODE_ENV === 'production',
+               sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+            })
+            .status(200)
+            .json({ success: true, message: "Email is already verified", accessToken, csrfToken});
+      }
+      // ---------- Send verification email ----------
+      // Create payload for JWT
+      const verifyPayload: JWTPayloadVerify = {
+         uuid: userDataFull.uuid,
+         purpose: 'email_verification',
+         issuedAt: Date.now(),
+      };
+      const verifyToken: string = jwt.sign(verifyPayload, VERIFY_EMAIL_SECRET, { expiresIn: '1d' });
+      await email_verify(userDataFull.email, userDataFull.name, verifyToken);
+      // ---------------------------------------------
+      return res.status(200).json({ success: true, message: "Verification email sent successfully" });
+   } catch (error) {
+      console.error(error);
+      return res.status(500).json({ success: false, message: "Internal server error" });
    }
 }
 

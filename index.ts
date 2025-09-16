@@ -9,10 +9,10 @@ import { testConnection } from './services/db.ts';
 const app: Application = express();
 
 // -------------- Routes --------------
-import userRoutes from '@routes/user.js';
-import investmentsRoute from '@routes/investments.js';
-import instrumentsRoute from '@routes/instruments.js';
-import catalogsRoute from '@routes/catalogs.js';
+import userRoutes from '@routes/user.ts';
+import investmentsRoute from '@routes/investments.ts';
+import instrumentsRoute from '@routes/instruments.ts';
+import catalogsRoute from '@routes/catalogs.ts';
 
 // -------------- Settings --------------
 app.use(express.json());
