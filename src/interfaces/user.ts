@@ -1,4 +1,5 @@
 export interface User {
+    id?: number;
     uuid: string;
     email: string;
     name: string;
@@ -37,6 +38,6 @@ export interface JWTPayload {
 export interface JWTPayloadVerify {
     uuid: string;
     purpose: string;
-    issuedAt: number; // timestamp of token issuance
+    iat?: number; // issued at as a timestamp
     exp?: number; // expiration time as a timestamp
 }

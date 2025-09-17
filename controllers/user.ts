@@ -25,11 +25,8 @@ import { db_registerUser, db_authenticateUser, db_changeUserPassword, db_generat
    db_getUserData, db_verifyUserEmail,
    db_getUserDataByUUID} from "@services/user.js";
 
-import { createAuthTokens, getAccessTokenFromHeader, revokedCSRFToken, verifyAccessToken } from '@auth/config/users.js';
-import user from '@routes/user';
-import { access } from 'fs';
+import { createAuthTokens, getAccessTokenFromHeader, revokedCSRFToken, verifyAccessToken, cookieOptions, createVerifyToken } from '@auth/config/users.js';
 
-const ACCESS_SECRET = process.env.ACCESS_SECRET as string;
 const REFRESH_SECRET = process.env.REFRESH_SECRET as string;
 const VERIFY_EMAIL_SECRET = process.env.VERIFY_EMAIL_SECRET as string;
 
@@ -44,6 +41,7 @@ function parseAuthFromDb(dbUser: any): Authenticate {
 
 function parseUserFromDb(dbUser: any): User {
    return {
+      id: Number(dbUser.id),
       uuid: String(dbUser.uuid),
       email: String(dbUser.email),
       name: String(dbUser.name),
@@ -64,8 +62,6 @@ function parseRegisterFromDb(dbUser: any): Register {
 
 export async function login(req: Request, res: Response): Promise<Response> {
    try {
-      consoleLog("-----Iniciando sesión-----");
-      consoleLog("Datos de la solicitud:", req.body);
       // Validation with Zod
       const validationResult = loginSchema.safeParse(req.body);
 
@@ -85,7 +81,7 @@ export async function login(req: Request, res: Response): Promise<Response> {
       const { email, password } : LoginData = validationResult.data;
       // Authenticate user
       const result = await db_authenticateUser(email);
-      console.log("Authentication result:", result);
+
       if (!result) {
          return res.status(404).json({ 
             success: false, 
@@ -94,7 +90,7 @@ export async function login(req: Request, res: Response): Promise<Response> {
       }
 
       const userData = parseAuthFromDb(result);
-      console.log("userData:", userData);
+
       if (!bcrypt.compareSync(password, userData.hashedPassword)) {
          console.log("Invalid password");
          return res.status(404).json({
@@ -105,35 +101,14 @@ export async function login(req: Request, res: Response): Promise<Response> {
 
       const fullUserDataResult = await db_getUserData(email);
       const userDataFull = parseUserFromDb(fullUserDataResult);
-      console.log("userDataFull:", userDataFull);
-
-      // Create payload for JWT
-      const payload: JWTPayload = {
-         user: {
-            uuid: userDataFull.uuid,
-            email: userDataFull.email,
-            name: userDataFull.name,
-            lastname: userDataFull.lastname,
-            profile_picture: userDataFull.profile_picture,
-            country: userDataFull.country,
-            email_verified: userDataFull.email_verified
-         },
-         purpose: 'authentication',
-         issuedAt: Date.now(),
-      };
 
       // Generate token
-      // const token: string = jwt.sign(payload, ACCESS_SECRET, { expiresIn: '24h' });
-      // const refreshToken: string = jwt.sign({ uuid: userDataFull.uuid, jti: uuidv4(), }, REFRESH_SECRET, { expiresIn: '1d' });
-      const { accessToken: token, refreshToken, csrfToken } = await createAuthTokens(payload, userDataFull.uuid);
+      const { accessToken: token, refreshToken, csrfToken } = await createAuthTokens(userDataFull);
+
+      // 🍪 Set refresh token in HTTP-only cookie
+      res.cookie('refreshToken', refreshToken, cookieOptions);
 
       return res
-         .cookie('refreshToken', refreshToken, {
-            httpOnly: true,       // 🔐 No accesible desde JavaScript
-            secure: process.env.NODE_ENV === 'production',         // 🔒 Solo se envía por HTTPS
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',   // 🛡️ Protege contra CSRF
-            maxAge: 1 * 24 * 60 * 60 * 1000, // 1 día
-         })
          .status(200)
          .json({ 
             success: true, 
@@ -190,40 +165,15 @@ export async function signup(req: Request, res: Response): Promise<Response> {
       const userData = parseRegisterFromDb(response);
 
       // Create payload for JWT
-      const payload: JWTPayload = {
-         user: {
-            uuid: userData.uuid,
-            email: user.email,
-            name: user.name,
-            lastname: user.lastname,
-            profile_picture: user.profile_picture,
-            country: userData.country,
-            email_verified: false
-         },
-         purpose: 'authentication',
-         issuedAt: Date.now(),
-      };
-
-      const { accessToken, refreshToken, csrfToken } = await createAuthTokens(payload, userData.uuid);
+      const { accessToken, refreshToken, csrfToken } = await createAuthTokens(userData);
 
       // ---------- Send verification email ----------
-      // Create payload for JWT
-      const verifyPayload: JWTPayloadVerify = {
-         uuid: userData.uuid,
-         purpose: 'email_verification',
-         issuedAt: Date.now(),
-      };
-      const verifyToken: string = jwt.sign(verifyPayload, VERIFY_EMAIL_SECRET, { expiresIn: '1d' });
+      const verifyToken = createVerifyToken(userData.uuid);
       await email_verify(user.email, user.name, verifyToken);
       // ---------------------------------------------
 
       return res
-         .cookie('refreshToken', refreshToken, {
-            httpOnly: true,       // 🔐 No accesible desde JavaScript
-            secure: true,         // 🔒 Solo se envía por HTTPS
-            sameSite: 'none',   // 🛡️ Protege contra CSRF
-            maxAge: 1 * 24 * 60 * 60 * 1000, // 1 día
-         })
+         .cookie('refreshToken', refreshToken, cookieOptions)
          .status(200)
          .json({
             token: accessToken,
@@ -236,24 +186,27 @@ export async function signup(req: Request, res: Response): Promise<Response> {
 }
 
 export async function logout(req,res){
+   consoleLog("-----Cerrando sesión-----");
    const accessToken = getAccessTokenFromHeader(req);
    const decoded = verifyAccessToken(accessToken);
-   const csrfToken = req.headers['x-csrf-token'];
+   const csrfToken = req.headers['x-csrf-token'] as string;
 
    if (!decoded) {
       return res.status(401).json({ message: 'Token de acceso inválido' });
    }
 
    const decodedPayload = decoded as JWTPayload;
-
+   console.log("Decoded Payload:", decodedPayload);
+   if (!csrfToken) {
+      return res.status(401).json({ message: 'CSRF token is required' });
+   }
    await revokedCSRFToken(csrfToken, decodedPayload.user.uuid);
-   // Destruir la sesión y redirigir a la página de inicio de sesión
+
    res
-      .clearCookie('refreshToken', {
-         httpOnly: true,
-         secure: process.env.NODE_ENV === 'production',
-         sameSite: 'none',
-      })
+      .clearCookie('refreshToken', cookieOptions)
+
+   // Destruir la sesión y redirigir a la página de inicio de sesión
+   return res
       .status(200)
       .json({ success: true, message: 'Sesión cerrada correctamente' });
 }
@@ -277,37 +230,12 @@ export const refreshTokenHandler = async (req: Request, res: Response) => {
 
       const userData = parseUserFromDb(user);
 
-      // Create payload for JWT
-      const newPayload: JWTPayload = {
-         user: {
-            uuid: userData.uuid,
-            email: userData.email,
-            name: userData.name,
-            lastname: userData.lastname,
-            profile_picture: userData.profile_picture,
-            country: userData.country,
-            email_verified: userData.email_verified
-         },
-         purpose: 'authentication',
-         issuedAt: Date.now(),
-      };
-
-      // // Generate token
-      // const newAccessToken: string = jwt.sign(newPayload, ACCESS_SECRET, { expiresIn: '1d' });
-
-      // // Rotar refresh token
-      // const newRefreshToken: string = jwt.sign({ uuid: userData.uuid, jti: uuidv4(), }, REFRESH_SECRET, { expiresIn: '1d' });
-
-      const { accessToken, refreshToken, csrfToken } = await createAuthTokens(newPayload, newPayload.user.uuid);
+      // Generate token
+      const { accessToken, refreshToken, csrfToken } = await createAuthTokens(userData);
 
       // 🍪 Actualizar la cookie y 📦 Enviar nuevo access token
       return res
-         .cookie('refreshToken', refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'none',
-            maxAge: 1 * 24 * 60 * 60 * 1000, // 1 día
-         })
+         .cookie('refreshToken', refreshToken, cookieOptions)
          .status(200)
          .json({ success: true, accessToken, csrfToken });
    } catch (err) {
@@ -315,7 +243,6 @@ export const refreshTokenHandler = async (req: Request, res: Response) => {
       return res.status(401).json({ success: false, message: 'Refresh token inválido o expirado' });
    }
 };
-
 
 export async function changeUserPassword(req: Request, res: Response): Promise<Response> {
    try {
@@ -353,10 +280,13 @@ export async function changeUserPassword(req: Request, res: Response): Promise<R
 
 export async function verifyEmail(req: Request, res: Response): Promise<Response> {
    try {
-      const { token } = req.params;
+      consoleLog("-----Verificando email-----");
+      const token = req.query.token as string;
+      console.log("Token recibido:", token);
       if (!token) return res.status(400).json({ success: false, message: "Token is required" });
 
       const payload = jwt.verify(token, VERIFY_EMAIL_SECRET) as JWTPayloadVerify;
+      console.log("Payload from token:", payload);
       if (!payload || payload.purpose !== 'email_verification') return res.status(401).json({ success: false, message: "Invalid token" });
 
       if (payload.purpose !== 'email_verification') {
@@ -368,43 +298,27 @@ export async function verifyEmail(req: Request, res: Response): Promise<Response
          return res.status(401).json({ success: false, message: "Token expired" });
       }
 
+      await db_verifyUserEmail(payload.uuid);
+
       const user = await db_getUserDataByUUID(payload.uuid);
       if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
+      console.log("User from DB:", user);
+
       const userDataFull = parseUserFromDb(user);
-      const newPayload: JWTPayload = {
-         user: {
-            uuid: userDataFull.uuid,
-            email: userDataFull.email,
-            name: userDataFull.name,
-            lastname: userDataFull.lastname,
-            profile_picture: userDataFull.profile_picture,
-            country: userDataFull.country,
-            email_verified: userDataFull.email_verified
-         },
-         purpose: 'authentication',
-         issuedAt: Date.now(),
-      };
-      const { accessToken, refreshToken, csrfToken } = await createAuthTokens(newPayload, userDataFull.uuid);
+      console.log("userDataFull:", userDataFull);
+      const { accessToken, refreshToken, csrfToken } = await createAuthTokens(userDataFull);
 
-      if (userDataFull.email_verified) {
-         return res
-               .cookie('refreshToken', refreshToken, {
-                  httpOnly: true,
-                  secure: process.env.NODE_ENV === 'production',
-                  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-               })
-               .status(200).json({ success: true, message: "Email is already verified", accessToken, csrfToken});
-      }
+      let message = "";
 
-      await db_verifyUserEmail(user.id);
+      if (userDataFull.email_verified) message = "Email is already verified";
+      else message = "Email verified successfully";
+
+      console.log("message:", message);
+
       return res
-            .cookie('refreshToken', refreshToken, {
-                  httpOnly: true,
-                  secure: process.env.NODE_ENV === 'production',
-                  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-               })
-            .status(200).json({ success: true, message: "Email verified successfully", accessToken, csrfToken });
+            .cookie('refreshToken', refreshToken, cookieOptions)
+            .status(200).json({ success: true, message, accessToken, csrfToken });
    } catch (error) {
       console.error(error);
       return res.status(500).json({ success: false, message: "Internal server error" });
@@ -431,43 +345,20 @@ export async function resendVerificationEmail(req: Request, res: Response): Prom
       console.log("userDataFull:", userDataFull);
 
       if(userDataFull.email_verified) {
-         // Create payload for JWT
-         const payload: JWTPayload = {
-            user: {
-               uuid: userDataFull.uuid,
-               email: userDataFull.email,
-               name: userDataFull.name,
-               lastname: userDataFull.lastname,
-               profile_picture: userDataFull.profile_picture,
-               country: userDataFull.country,
-               email_verified: userDataFull.email_verified
-            },
-            purpose: 'authentication',
-            issuedAt: Date.now(),
-         };
-         // Generate token
-         const { accessToken, refreshToken, csrfToken } = await createAuthTokens(payload, userDataFull.uuid);
+         // Generate token for already verified email
+         const { accessToken, refreshToken, csrfToken } = await createAuthTokens(userDataFull);
 
          return res
-            .cookie('refreshToken', refreshToken, {
-               httpOnly: true,
-               secure: process.env.NODE_ENV === 'production',
-               sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-            })
+            .cookie('refreshToken', refreshToken, cookieOptions)
             .status(200)
-            .json({ success: true, message: "Email is already verified", accessToken, csrfToken});
+            .json({ success: true, message: "Email is already verified", emailVerified: true, newToken: accessToken, newCsrfToken: csrfToken });
       }
       // ---------- Send verification email ----------
       // Create payload for JWT
-      const verifyPayload: JWTPayloadVerify = {
-         uuid: userDataFull.uuid,
-         purpose: 'email_verification',
-         issuedAt: Date.now(),
-      };
-      const verifyToken: string = jwt.sign(verifyPayload, VERIFY_EMAIL_SECRET, { expiresIn: '1d' });
+      const verifyToken = createVerifyToken(userDataFull.uuid);
       await email_verify(userDataFull.email, userDataFull.name, verifyToken);
       // ---------------------------------------------
-      return res.status(200).json({ success: true, message: "Verification email sent successfully" });
+      return res.status(200).json({ success: true, message: "Verification email sent successfully", emailVerified: false });
    } catch (error) {
       console.error(error);
       return res.status(500).json({ success: false, message: "Internal server error" });

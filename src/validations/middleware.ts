@@ -54,7 +54,47 @@ export const validateBody = <T>(schema: z.ZodSchema<T>) => {
     };
 };
 
+// Middleware para headers - versión simplificada
+export const validateHeader = <T>(schema: z.ZodSchema<T>) => {
+    return (req: Request, res: Response, next: NextFunction) => {
+        try {
+            // Normalizar headers: convertir a objeto plano con claves en minúsculas
+            const normalizedHeaders = Object.fromEntries(
+                Object.entries(req.headers).map(([key, value]) => [key.toLowerCase(), value])
+            );
 
+            // Validación con Zod
+            const validationResult = schema.safeParse(normalizedHeaders);
+
+            if (!validationResult.success) {
+                const errors = validationResult.error.issues.map(err => ({
+                    field: err.path.join('.'),
+                    message: err.message,
+                    code: err.code
+                }));
+
+                console.warn('Header validation failed:', errors);
+
+                return res.status(400).json({
+                    success: false,
+                    message: 'Header validation failed',
+                    errors
+                });
+            }
+
+            // Propagar headers validados
+            (req as any).validatedHeaders = validationResult.data;
+
+            next();
+        } catch (error) {
+            console.error('Header validation middleware error:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Internal header validation error'
+            });
+        }
+    };
+};
 
 // Middleware para query - versión simplificada
 export const validateQuery = <T>(schema: z.ZodSchema<T>) => {
@@ -64,10 +104,12 @@ export const validateQuery = <T>(schema: z.ZodSchema<T>) => {
         
         if (!validationResult.success) {
             const errors = validationResult.error.issues.map(err => ({
-            field: err.path.join('.'),
-            message: err.message,
-            code: err.code
+                field: err.path.join('.'),
+                message: err.message,
+                code: err.code
             }));
+
+            console.warn('Query validation failed:', errors);
             
             return res.status(400).json({
             success: false,
@@ -127,5 +169,6 @@ export const validateParams = <T>(schema: z.ZodSchema<T>) => {
 export const getValidatedData = {
     body: <T>(req: Request): T => (req as any).validatedBody || req.body,
     query: <T>(req: Request): T => (req as any).validatedQuery || req.query,
-    params: <T>(req: Request): T => (req as any).validatedParams || req.params
+    params: <T>(req: Request): T => (req as any).validatedParams || req.params,
+    headers: <T>(req: Request): T => (req as any).validatedHeaders || req.headers,
 };

@@ -47,7 +47,7 @@ export async function email_verify(email,name,token) {
         const templateData = TEMPLATES.verify;
         const templatePath = path.join(EMAIL_TEMPLATES_PATH, `${templateData.file}`);
         let template = fs.readFileSync(templatePath, 'utf8');
-        const url = `${process.env.FRONTEND_URL}/verifiy-email?token=${token}`;
+        const url = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
         const variables = {
             name: name,
             url: url

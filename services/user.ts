@@ -49,25 +49,24 @@ export async function db_registerUser(userData) {
 export async function db_authenticateUser(email){
     // Consultar el usuario por email
     const users = await db.execute("SELECT email, hashed_password FROM users WHERE email = ?", [email]);
-    console.log("users:", users.rows);
-
     return users.rows.length > 0 ? users.rows[0] : null;
 }
 
 export async function db_getUserData(email){
     // Consultar el usuario por email
     const users = await db.execute("SELECT * FROM users WHERE email = ?", [email]);
+    console.log("users:", users);
     if (users.rows.length !== 0) {
         await db.execute("UPDATE users SET last_login = ? WHERE email = ?", [new Date().toISOString().split('.')[0] + 'Z', email]);
     }
-    console.log("users:", users.rows);
 
     return users.rows.length > 0 ? users.rows[0] : null;
 }
 
 export async function db_getUserDataByUUID(uuid){
     // Consultar el usuario por UUID
-    const users = await db.execute("SELECT * FROM users WHERE uuid = ?", [uuid]);
+    console.log("UUID recibido:", uuid);
+    const users = await db.execute("SELECT * FROM users JOIN countries ON countries.country_id = users.country WHERE uuid = ?", [uuid]);
     if (users.rows.length !== 0) {
         await db.execute("UPDATE users SET last_login = ? WHERE uuid = ?", [new Date().toISOString().split('.')[0] + 'Z', uuid]);
     }
@@ -77,6 +76,7 @@ export async function db_getUserDataByUUID(uuid){
     }
     // Format the user data to include country details
     const formatted = users.rows.map(row => ({
+      id: row.id,
       uuid: row.uuid,
       name: row.name,
       lastname: row.lastname,
@@ -84,7 +84,7 @@ export async function db_getUserDataByUUID(uuid){
       email_verified: row.email_verified === 1, // Convert to boolean
       email: row.email,
       country: {
-        id: row.country,
+        id: row.country_id ,
         currency: row.currency,
         country_iso_code: row.country_iso_code,
         currency_symbol: row.currency_symbol,
@@ -94,7 +94,9 @@ export async function db_getUserDataByUUID(uuid){
       }
     }));
 
-    return formatted;
+    console.log("Formatted user data:", formatted);
+
+    return formatted[0];
 }
 
 export async function db_changeUserPassword(email, newPassword){

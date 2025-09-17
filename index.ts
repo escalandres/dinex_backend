@@ -17,7 +17,10 @@ import catalogsRoute from '@routes/catalogs.ts';
 // -------------- Settings --------------
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL, // 👈  frontend
+  credentials: true // 👈 habilita el envío de cookies
+}));
 
 // -------------- Routes --------------
 app.get('/', (req: Request, res: Response) => {

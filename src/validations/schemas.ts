@@ -120,10 +120,18 @@ export const fileSchema = z.object({
 export const verifyEmailParamsSchema = z.object({
     token: z
         .string()
-        .min(32, { message: 'El token debe tener al menos 32 caracteres.' })
-        .max(128, { message: 'El token excede el tamaño permitido.' })
-        .regex(/^[a-zA-Z0-9-_]+$/, { message: 'Formato de token inválido.' })
+        .min(128, { message: 'El token debe tener al menos 128 caracteres.' })
+        .max(250, { message: 'El token excede el tamaño permitido.' })
+        .regex(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/, {
+            message: 'Formato de JWT inválido.'
+        }),
 });
+
+const headerSchema = z.object({
+    authorization: z.string().startsWith('Bearer '),
+    'x-csrf-token': z.string().min(10)
+});
+
 
 
 // Group all schemas
@@ -134,5 +142,6 @@ export const schemas = {
     changePassword: changePasswordSchema,
     oauth: oauthSchema,
     file: fileSchema,
-    verifyEmailParams: verifyEmailParamsSchema
+    verifyEmailParams: verifyEmailParamsSchema,
+    headers: headerSchema
 };
