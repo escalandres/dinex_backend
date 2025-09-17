@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS "income_sources_catalog" (
 );
 
 CREATE TABLE IF NOT EXISTS "countries" (
-	"id" INTEGER NOT NULL UNIQUE,
+	"country_id" INTEGER NOT NULL UNIQUE,
 	"name" TEXT,
 	"country_iso_code" TEXT,
 	"currency" TEXT,
@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS "users" (
 	"email_verified" BOOLEAN NOT NULL,
 	"created_date" TEXT NOT NULL,
 	"last_login" TEXT NOT NULL,
-	FOREIGN KEY ("country") REFERENCES "countries"("id")
+	FOREIGN KEY ("country") REFERENCES "countries"("country_id")
 	ON UPDATE NO ACTION ON DELETE NO ACTION
 );
 
