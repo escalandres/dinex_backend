@@ -1,4 +1,3 @@
-import { count } from 'console';
 import db from './db.js';
 
 export async function db_registerUser(userData) {
@@ -53,24 +52,41 @@ export async function db_authenticateUser(email){
 }
 
 export async function db_getUserData(email){
-    // Consultar el usuario por email
-    const users = await db.execute("SELECT * FROM users WHERE email = ?", [email]);
-    console.log("users:", users);
+    // Get user by email
+    const users = await db.execute("SELECT * FROM users JOIN countries ON countries.country_id = users.country WHERE email = ?", [email]);
     if (users.rows.length !== 0) {
         await db.execute("UPDATE users SET last_login = ? WHERE email = ?", [new Date().toISOString().split('.')[0] + 'Z', email]);
     }
+    // Format the user data to include country details
+    const formatted = users.rows.map(row => ({
+      id: row.id,
+      uuid: row.uuid,
+      name: row.name,
+      lastname: row.lastname,
+      profile_picture: row.profile_picture,
+      email_verified: row.email_verified === 1, // Convert to boolean
+      email: row.email,
+      country: {
+        id: row.country_id ,
+        currency: row.currency,
+        currency_code: row.currency_code,
+        country_iso_code: row.country_iso_code,
+        currency_symbol: row.currency_symbol,
+        currency_format: row.currency_format,
+        flag_icon: row.flag_icon,
+        language_code: row.language_code
+      }
+    }));
 
-    return users.rows.length > 0 ? users.rows[0] : null;
+    return formatted[0];
 }
 
 export async function db_getUserDataByUUID(uuid){
     // Consultar el usuario por UUID
-    console.log("UUID recibido:", uuid);
     const users = await db.execute("SELECT * FROM users JOIN countries ON countries.country_id = users.country WHERE uuid = ?", [uuid]);
     if (users.rows.length !== 0) {
         await db.execute("UPDATE users SET last_login = ? WHERE uuid = ?", [new Date().toISOString().split('.')[0] + 'Z', uuid]);
     }
-    console.log("users:", users.rows);
     if (users.rows.length === 0) {
         return null;
     }
@@ -86,6 +102,7 @@ export async function db_getUserDataByUUID(uuid){
       country: {
         id: row.country_id ,
         currency: row.currency,
+        currency_code: row.currency_code,
         country_iso_code: row.country_iso_code,
         currency_symbol: row.currency_symbol,
         currency_format: row.currency_format,
@@ -93,8 +110,6 @@ export async function db_getUserDataByUUID(uuid){
         language_code: row.language_code
       }
     }));
-
-    console.log("Formatted user data:", formatted);
 
     return formatted[0];
 }
@@ -135,9 +150,9 @@ export async function db_getUserId(uuid) {
         ]
     });
 
-    return {
-      userId: userId.rows.length > 0 ? userId.rows[0].id : null,
-    };
+    console.log("User ID query result:", userId); // Depuración
+
+    return userId.rows.length > 0 ? userId.rows[0].id : null;
 }
 
 export async function db_verifyUserEmail(uuid) {
@@ -199,8 +214,8 @@ export async function db_generateOTP(email, code) {
 
 // 2. Validate OTP
 export async function db_validateOTP(uuid, code) {
-    const user = await db_getUserId(uuid);
-    if (!user || !user.userId) {
+    const userId = await db_getUserId(uuid);
+    if (!userId) {
         throw new Error("Usuario no encontrado");
     }
 
@@ -215,10 +230,10 @@ export async function db_validateOTP(uuid, code) {
         AND expiration_date > ?
         LIMIT 1
         `,
-        args: [user.userId, code, now]
+        args: [userId, code, now]
     });
 
-    return result.rows.length > 0 ? { expiration: result.rows[0].expiration_date, otp: result.rows[0].otp_code, userId: user.userId } : null;
+    return result.rows.length > 0 ? { expiration: result.rows[0].expiration_date, otp: result.rows[0].otp_code, userId: userId } : null;
 }
 
 // 3. Mark OTP as used

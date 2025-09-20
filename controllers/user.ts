@@ -152,7 +152,6 @@ export async function signup(req: Request, res: Response): Promise<Response> {
          hashed_password: hashedPassword, country: countryId, 
          profile_picture: ""
       }
-      console.log("User to register:", user);
       const response = await db_registerUser(user);
 
       if (!response || !response.uuid || !response.country) {
@@ -196,7 +195,7 @@ export async function logout(req,res){
    }
 
    const decodedPayload = decoded as JWTPayload;
-   console.log("Decoded Payload:", decodedPayload);
+
    if (!csrfToken) {
       return res.status(401).json({ message: 'CSRF token is required' });
    }
@@ -282,11 +281,11 @@ export async function verifyEmail(req: Request, res: Response): Promise<Response
    try {
       consoleLog("-----Verificando email-----");
       const token = req.query.token as string;
-      console.log("Token recibido:", token);
+
       if (!token) return res.status(400).json({ success: false, message: "Token is required" });
 
       const payload = jwt.verify(token, VERIFY_EMAIL_SECRET) as JWTPayloadVerify;
-      console.log("Payload from token:", payload);
+
       if (!payload || payload.purpose !== 'email_verification') return res.status(401).json({ success: false, message: "Invalid token" });
 
       if (payload.purpose !== 'email_verification') {
@@ -303,18 +302,13 @@ export async function verifyEmail(req: Request, res: Response): Promise<Response
       const user = await db_getUserDataByUUID(payload.uuid);
       if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
-      console.log("User from DB:", user);
-
       const userDataFull = parseUserFromDb(user);
-      console.log("userDataFull:", userDataFull);
       const { accessToken, refreshToken, csrfToken } = await createAuthTokens(userDataFull);
 
       let message = "";
 
       if (userDataFull.email_verified) message = "Email is already verified";
       else message = "Email verified successfully";
-
-      console.log("message:", message);
 
       return res
             .cookie('refreshToken', refreshToken, cookieOptions)
@@ -336,13 +330,10 @@ export async function resendVerificationEmail(req: Request, res: Response): Prom
 
       const payload = verifyAccessToken(authToken) as JWTPayload;
 
-      console.log("Payload from token:", payload);
-
       const { email } = payload.user;
 
       const fullUserDataResult = await db_getUserData(email);
       const userDataFull = parseUserFromDb(fullUserDataResult);
-      console.log("userDataFull:", userDataFull);
 
       if(userDataFull.email_verified) {
          // Generate token for already verified email

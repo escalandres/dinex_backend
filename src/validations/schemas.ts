@@ -11,6 +11,12 @@ export const signupSchema = z.object({
         .max(128, "Password must be less than 128 characters")
         .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 
         "Password must contain at least one uppercase letter, one lowercase letter, and one number"),
+
+    confirmPassword: z.string()
+        .min(8, "Confirm password must be at least 8 characters long")
+        .max(128, "Confirm password must be less than 128 characters")
+        .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 
+        "Confirm password must contain at least one uppercase letter, one lowercase letter, and one number"),
     
     name: z.string()
         .min(1, "Name is required")
