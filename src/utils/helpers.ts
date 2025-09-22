@@ -40,18 +40,6 @@ export function consoleLog(title, message = "", showOnProd = false) {
     }
 }
 
-export function validateToken(token) { 
-    try { 
-        const decodedToken = jwt.verify(token, process.env.KEY); 
-        // console.log('Token válido'); 
-        // Puedes realizar acciones adicionales con el decodedToken aquí 
-        return decodedToken; 
-    } catch (error) { 
-        console.error('Token no válido:', error.message); // Maneja el error según sea necesario 
-        return null; 
-    } 
-};
-
 // export function generateOTP() {
 //     const min = 100; // El número mínimo de 1 dígitos (inclusive)
 //     const max = 999999; // El número máximo de 6 dígitos (inclusive)

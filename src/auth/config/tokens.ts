@@ -2,10 +2,10 @@ import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 import jwt from 'jsonwebtoken';
 import db from '@services/db.js';
-import { db_getUserId } from '@services/user.js';
+import { db_getUserId, db_verifyCSRFToken } from '@services/user.js';
 import { CookieOptions } from 'express';
 import { User, Register, JWTPayload, JWTPayloadVerify, Authenticate } from '@interfaces/user';
-import { consoleLog } from '@utils/helpers';
+import { consoleLog } from '@src/utils/helpers';
 
 const ACCESS_SECRET = process.env.ACCESS_SECRET as string;
 const REFRESH_SECRET = process.env.REFRESH_SECRET as string;
@@ -72,7 +72,6 @@ export const createAuthTokens = async (userData) => {
             email_verified: userData.email_verified
         },
         purpose: 'authentication',
-        issuedAt: Date.now(),
     };
     const userId = await db_getUserId(userData.uuid);
     if (!userId) {
@@ -85,22 +84,51 @@ export const createAuthTokens = async (userData) => {
     return { accessToken, refreshToken, csrfToken };
 };
 
-export const getAccessTokenFromHeader = (req) => {
-    console.log("-----Obteniendo token de acceso-----");
-    console.log("Request Headers:", req.headers);
+export const verifyCSRFToken = async (csrfToken, uuid) => {
+    // console.log("-----Verificando token CSRF-----");
+    // console.log("CSRF Token:", csrfToken);
+    // console.log("User UUID:", uuid);
+    const isCSRFValid = await db_verifyCSRFToken(uuid, csrfToken);
+    return isCSRFValid;
+}
+
+const getAccessTokenFromHeader = (req) => {
+    // console.log("-----Obteniendo token de acceso-----");
+    // console.log("Request Headers:", req.headers);
     const authHeader = req.headers['authorization'];
     if (!authHeader) return null;
     const token = authHeader.split(' ')[1];
     return token || null;
 };
 
-export const verifyAccessToken = (token) => {
+export const verifyAccessToken = async (req) => {
     try {
-        const decoded = jwt.verify(token, ACCESS_SECRET);
+        const csrfToken = req.headers['x-csrf-token'];
+        if (!csrfToken) {
+            console.error('Token CSRF no proporcionado');
+            return '';
+        }
+        const token = getAccessTokenFromHeader(req);
+        if (!token) {
+            console.error('Token de acceso no proporcionado');
+            return '';
+        }
+        const decoded = jwt.verify(token, ACCESS_SECRET) as JWTPayload;
+        const isExpired = decoded.exp * 1000 < Date.now();
+        if (isExpired) {
+            console.error('Token de acceso expirado');
+            return '';
+        }
+        const isCSRFValid = await verifyCSRFToken(csrfToken, decoded.user.uuid);
+        // console.log("isCSRFValid:", isCSRFValid);
+        if (!isCSRFValid) {
+            console.error('Token CSRF inválido');
+            return '';
+        }
         return decoded;
     } catch (error) {
         console.error('Error al verificar el token de acceso:', error);
-        return null;
+        return '';
     }
 };
 

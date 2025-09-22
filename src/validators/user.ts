@@ -1,6 +1,6 @@
 import { z } from 'zod';
-// Schema for registration
-export const signupSchema = z.object({
+// Validator for registration
+export const signupValidator = z.object({
     email: z.string()
         .email("Email must be a valid email address")
         .min(1, "Email is required")
@@ -35,8 +35,8 @@ export const signupSchema = z.object({
         .positive("Country ID must be a positive number")
 });
 
-// Schema for login
-export const loginSchema = z.object({
+// Validator for login
+export const loginValidator = z.object({
     email: z.string()
         .email("Email must be a valid email address")
         .min(1, "Email is required")
@@ -45,8 +45,8 @@ export const loginSchema = z.object({
         .min(1, "Password is required")
 });
 
-// Schema for updating profile
-export const updateProfileSchema = z.object({
+// Validator for updating profile
+export const updateProfileValidator = z.object({
     name: z.string()
         .min(1, "Name is required")
         .max(50, "Name must be less than 50 characters")
@@ -69,8 +69,8 @@ export const updateProfileSchema = z.object({
     message: "At least one field must be provided"
 });
 
-// Schema for changing password
-export const changePasswordSchema = z.object({
+// Validator for changing password
+export const changePasswordValidator = z.object({
         currentPassword: z.string().min(1, "Current password is required"),
         
         newPassword: z.string()
@@ -87,7 +87,7 @@ export const changePasswordSchema = z.object({
     path: ["confirmPassword"]
 });
 
-export const oauthSchema = z.object({
+export const oauthValidator = z.object({
     email: z.string()
         .email("Email must be a valid email address")
         .min(1, "Email is required")
@@ -116,14 +116,14 @@ export const oauthSchema = z.object({
         .optional()
 });
 
-export const fileSchema = z.object({
+export const fileValidator = z.object({
     originalname: z.string().min(1, "File name is required"),
     mimetype: z.string().regex(/^image\/(jpeg|png|gif)$/, "Only JPEG, PNG, and GIF images are allowed"),
     size: z.number().max(3 * 1024 * 1024, "File size must be less than 3MB"), // 3MB
     uuid: z.string().uuid()
 });
 
-export const verifyEmailParamsSchema = z.object({
+export const verifyEmailParamsValidator = z.object({
     token: z
         .string()
         .min(128, { message: 'El token debe tener al menos 128 caracteres.' })
@@ -133,21 +133,19 @@ export const verifyEmailParamsSchema = z.object({
         }),
 });
 
-const headerSchema = z.object({
+const headerValidator = z.object({
     authorization: z.string().startsWith('Bearer '),
     'x-csrf-token': z.string().min(10)
 });
 
-
-
-// Group all schemas
-export const schemas = {
-    signup: signupSchema,
-    login: loginSchema,
-    updateProfile: updateProfileSchema,
-    changePassword: changePasswordSchema,
-    oauth: oauthSchema,
-    file: fileSchema,
-    verifyEmailParams: verifyEmailParamsSchema,
-    headers: headerSchema
+// Group all Validators
+export const userValidators = {
+    signup: signupValidator,
+    login: loginValidator,
+    updateProfile: updateProfileValidator,
+    changePassword: changePasswordValidator,
+    oauth: oauthValidator,
+    file: fileValidator,
+    verifyEmailParams: verifyEmailParamsValidator,
+    headers: headerValidator
 };

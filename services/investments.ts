@@ -1,5 +1,5 @@
 import db from './db.js';
-import { registerEquityInvestmentSchema } from '@validations/investments.js';
+import { registerEquityInvestmentSchema } from '@src/validators/investments.js';
 
 export async function registerEquityInvestment(data: unknown) {
     const parsed = registerEquityInvestmentSchema.parse(data);

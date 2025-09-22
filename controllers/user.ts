@@ -1,11 +1,10 @@
 import jwt from 'jsonwebtoken';
-import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcrypt';
 import { Request, Response } from 'express';
 // Import interfaces
 import { User, Register, JWTPayload, JWTPayloadVerify, Authenticate } from '@interfaces/user';
-import { signupSchema, loginSchema, changePasswordSchema, updateProfileSchema, fileSchema } from '@validations/schemas';
-import { SignupData, LoginData, ChangePasswordData, UpdateProfileData, FileData } from '@validations/types';
+import { signupValidator, loginValidator, changePasswordValidator, updateProfileValidator, fileValidator } from '@src/validators/user';
+import { SignupData, LoginData, ChangePasswordData, UpdateProfileData, FileData } from '@src/validators/types';
 
 // ------ Import schemas and mapping functions ------
 // Google
@@ -18,14 +17,14 @@ import { GithubUserSchema, GithubUser } from "@schemas/github";
 import { mapGithubToDB } from "@mappers/githubToDB";
 
 // Import utils y services
-import { email_OTP, email_verify } from "@utils/emails.ts";
-import { consoleLog, generateRandomOTP } from "@utils/helpers.ts";
+import { email_OTP, email_verify } from "@src/utils/emails";
+import { consoleLog, generateRandomOTP } from "@src/utils/helpers";
 import { db_registerUser, db_authenticateUser, db_changeUserPassword, db_generateOTP, db_validateOTP, 
    db_markOTPUsed, db_registerOAuthUser, db_updateUserProfilePicture, 
    db_getUserData, db_verifyUserEmail,
    db_getUserDataByUUID} from "@services/user.js";
 
-import { createAuthTokens, getAccessTokenFromHeader, revokedCSRFToken, verifyAccessToken, cookieOptions, createVerifyToken } from '@auth/config/users.js';
+import { createAuthTokens, revokedCSRFToken, verifyAccessToken, cookieOptions, createVerifyToken } from '@src/auth/config/tokens.js';
 
 const REFRESH_SECRET = process.env.REFRESH_SECRET as string;
 const VERIFY_EMAIL_SECRET = process.env.VERIFY_EMAIL_SECRET as string;
@@ -63,7 +62,7 @@ function parseRegisterFromDb(dbUser: any): Register {
 export async function login(req: Request, res: Response): Promise<Response> {
    try {
       // Validation with Zod
-      const validationResult = loginSchema.safeParse(req.body);
+      const validationResult = loginValidator.safeParse(req.body);
 
       if (!validationResult.success) {
          const errors = validationResult.error.issues.map(err => ({
@@ -128,7 +127,7 @@ export async function login(req: Request, res: Response): Promise<Response> {
 export async function signup(req: Request, res: Response): Promise<Response> {
    try {
       // Validation with Zod
-      const validationResult = signupSchema.safeParse(req.body);
+      const validationResult = signupValidator.safeParse(req.body);
       
       if (!validationResult.success) {
          const errors = validationResult.error.issues.map(err => ({
@@ -170,9 +169,9 @@ export async function signup(req: Request, res: Response): Promise<Response> {
       const verifyToken = createVerifyToken(userData.uuid);
       await email_verify(user.email, user.name, verifyToken);
       // ---------------------------------------------
-
+      // 🍪 Set refresh token in HTTP-only cookie
+      res.cookie('refreshToken', refreshToken, cookieOptions);
       return res
-         .cookie('refreshToken', refreshToken, cookieOptions)
          .status(200)
          .json({
             token: accessToken,
@@ -186,20 +185,17 @@ export async function signup(req: Request, res: Response): Promise<Response> {
 
 export async function logout(req,res){
    consoleLog("-----Cerrando sesión-----");
-   const accessToken = getAccessTokenFromHeader(req);
-   const decoded = verifyAccessToken(accessToken);
-   const csrfToken = req.headers['x-csrf-token'] as string;
+   const payload = await verifyAccessToken(req) as JWTPayload;
 
-   if (!decoded) {
-      return res.status(401).json({ message: 'Token de acceso inválido' });
+   if (!payload) {
+      return res.status(401).json({ success: false, message: "Token no proporcionado o es incorrecto" });
    }
-
-   const decodedPayload = decoded as JWTPayload;
+   const csrfToken = req.headers['x-csrf-token'] as string;
 
    if (!csrfToken) {
       return res.status(401).json({ message: 'CSRF token is required' });
    }
-   await revokedCSRFToken(csrfToken, decodedPayload.user.uuid);
+   await revokedCSRFToken(csrfToken, payload.user.uuid);
 
    res
       .clearCookie('refreshToken', cookieOptions)
@@ -246,8 +242,14 @@ export const refreshTokenHandler = async (req: Request, res: Response) => {
 export async function changeUserPassword(req: Request, res: Response): Promise<Response> {
    try {
       consoleLog("-----Cambiando contraseña-----");
+      const decodedToken = await verifyAccessToken(req) as JWTPayload;
+
+      if (!decodedToken) {
+         return res.status(401).json({ success: false, message: "Token no proporcionado o es incorrecto" });
+      }
+
       // Validation with Zod
-      const validationResult = changePasswordSchema.safeParse(req.body);
+      const validationResult = changePasswordValidator.safeParse(req.body);
 
       if (!validationResult.success) {
          const errors = validationResult.error.issues.map(err => ({
@@ -322,13 +324,11 @@ export async function verifyEmail(req: Request, res: Response): Promise<Response
 export async function resendVerificationEmail(req: Request, res: Response): Promise<Response> {
    try {
       consoleLog("-----Reenviando email de verificación-----");
-      const authToken = getAccessTokenFromHeader(req);
+      const payload = await verifyAccessToken(req) as JWTPayload;
 
-      if (!authToken) {
-         return res.status(401).json({ success: false, message: "Token no proporcionado" });
+      if (!payload) {
+         return res.status(401).json({ success: false, message: "Token no proporcionado o es incorrecto" });
       }
-
-      const payload = verifyAccessToken(authToken) as JWTPayload;
 
       const { email } = payload.user;
 
@@ -360,7 +360,7 @@ export async function resendVerificationEmail(req: Request, res: Response): Prom
 //    try {
 //       consoleLog("-----Actualizando perfil-----");
 //       // Validation with Zod
-//       const validationResult = updateProfileSchema.safeParse(req.body);
+//       const validationResult = updateProfileValidator.safeParse(req.body);
 
 //       if (!validationResult.success) {
 //          const errors = validationResult.error.issues.map(err => ({
@@ -393,7 +393,7 @@ export async function updateProfilePicture(req: Request, res: Response): Promise
    try {
       consoleLog("-----Actualizando foto de perfil-----");
       // Validation with Zod
-      const validationResult = fileSchema.safeParse(req.body.file);
+      const validationResult = fileValidator.safeParse(req.body.file);
 
       if (!validationResult.success) {
          const errors = validationResult.error.issues.map(err => ({

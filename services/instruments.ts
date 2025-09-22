@@ -1,10 +1,11 @@
 import db from './db.js';
+import { db_getUserId } from './user.js';
 
 export async function db_registerInstrument(instrumentData) {
     await db.execute({
         sql: `
-        INSERT INTO instruments (user_id, description, type, subtype, cut_off_day, payment_due_day)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO instruments (user_id, description, type, subtype, cut_off_day, payment_due_day, currency)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
         `,
         args: [
             instrumentData.user_id,
@@ -12,9 +13,11 @@ export async function db_registerInstrument(instrumentData) {
             instrumentData.type,
             instrumentData.subtype,
             instrumentData.cut_off_day,
-            instrumentData.payment_due_day
+            instrumentData.payment_due_day,
+            instrumentData.currency
         ]
     });
+    return true;
 }
 
 export async function db_updateInstrument(instrumentData) {
@@ -30,24 +33,26 @@ export async function db_updateInstrument(instrumentData) {
             instrumentData.id
         ]
     });
+    return true;
 }
 
-export async function db_getUserInstruments(userId) {
-    const instruments = await db.execute("SELECT * FROM instruments WHERE user_id = ?", [userId]);
-    console.log("Instrumentos:", instruments.rows);
+export async function db_deleteInstrument(instrumentId, userId) {
+    await db.execute({
+        sql: `
+        DELETE FROM instruments WHERE id = ? AND user_id = ?
+        `,
+        args: [instrumentId, userId]
+    });
+    return true;
+}
+
+export async function db_getUserInstruments(uuid) {
+    const userId = await db_getUserId(uuid);
+    if (!userId) {
+        return [];
+    }
+    const instruments = await db.execute("SELECT id, description, type, subtype, cut_off_day, payment_due_day, currency FROM instruments WHERE user_id = ?", [userId]);
+    // console.log("Instrumentos:", instruments.rows);
 
     return instruments.rows.length > 0 ? instruments.rows : [];
-}
-
-export async function db_getInstrumentCatalogs() {
-    // Get instrument types and subtypes catalogs
-    let instrumentTypes = await db.execute("SELECT * FROM cat_tipo_instrumentos");
-    let instrumentSubtypes = await db.execute("SELECT * FROM cat_subtipo_instrumentos");
-    console.log("Cat Tipo Instrumentos:", instrumentTypes.rows);
-    console.log("Cat Subtipo Instrumentos:", instrumentSubtypes.rows);
-
-    return {
-        instrumentTypes: instrumentTypes.rows.length > 0 ? instrumentTypes.rows : [],
-        instrumentSubtypes: instrumentSubtypes.rows.length > 0 ? instrumentSubtypes.rows : []
-    };
 }

@@ -1,4 +1,4 @@
-import { consoleLog } from "@utils/helpers";
+import { consoleLog } from "@src/utils/helpers";
 export async function getGithubToken(code: string): Promise<string | undefined> {
     try {
         const params = new URLSearchParams({

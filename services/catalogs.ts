@@ -9,7 +9,7 @@ export async function db_getCountries() {
 
 export async function db_getCurrencies() {
     let currencies = await db.execute("SELECT DISTINCT currency_code as id, currency as name, MIN(flag_icon) AS flag_icon FROM countries GROUP BY currency_code, currency");
-    console.log("Currencies:", currencies.rows);
+    // console.log("Currencies:", currencies.rows);
     const updatedCurrencies = currencies.rows.map(currency => {
         if (currency.id === 'EUR') {
             return {
@@ -35,8 +35,8 @@ export async function db_instrument_catalogs() {
     let instrumentTypes = await db.execute("SELECT * FROM instruments_types_catalog");
     let instrumentSubtypes = await db.execute("SELECT * FROM instruments_subtypes_catalog");
     let currencies = await db_getCurrencies();
-    console.log("Cat Tipo Instrumentos:", instrumentTypes.rows);
-    console.log("Cat Subtipo Instrumentos:", instrumentSubtypes.rows);
+    // console.log("Cat Tipo Instrumentos:", instrumentTypes.rows);
+    // console.log("Cat Subtipo Instrumentos:", instrumentSubtypes.rows);
     return {
         instrumentTypes: instrumentTypes.rows.length > 0 ? instrumentTypes.rows : [],
         instrumentSubtypes: instrumentSubtypes.rows.length > 0 ? instrumentSubtypes.rows : [],

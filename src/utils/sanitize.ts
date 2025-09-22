@@ -1,6 +1,6 @@
 // import * as sanitizeHtml from "sanitize-html";
 
-import { LoginData, SignupData } from "@src/validations/types";
+import { LoginData, SignupData } from "@src/validators/types";
 
 // Protección contra prototype pollution - verificar keys peligrosos
 const dangerousKeys = ['__proto__', 'constructor', 'prototype'];

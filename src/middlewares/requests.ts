@@ -1,4 +1,4 @@
-import { z, ZodError } from 'zod';
+import { z } from 'zod';
 import { Request, Response, NextFunction } from 'express';
 
 // Tipos para manejar la validación
@@ -62,6 +62,8 @@ export const validateHeader = <T>(schema: z.ZodSchema<T>) => {
             const normalizedHeaders = Object.fromEntries(
                 Object.entries(req.headers).map(([key, value]) => [key.toLowerCase(), value])
             );
+
+            // console.log("Normalized Headers:", normalizedHeaders);
 
             // Validación con Zod
             const validationResult = schema.safeParse(normalizedHeaders);

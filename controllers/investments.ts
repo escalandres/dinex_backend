@@ -1,5 +1,5 @@
 
-import { formatDate } from "@utils/helpers";
+import { formatDate } from "@src/utils/helpers";
 
 export async function obtenerPrecioExacto(req,res) {
     const { symbol, fecha } = req.query;

@@ -150,7 +150,7 @@ export async function db_getUserId(uuid) {
         ]
     });
 
-    console.log("User ID query result:", userId); // Depuración
+    // console.log("User ID query result:", userId); // Depuración
 
     return userId.rows.length > 0 ? userId.rows[0].id : null;
 }
@@ -163,6 +163,17 @@ export async function db_verifyUserEmail(uuid) {
     const result = await db.execute("UPDATE users SET email_verified = 1 WHERE uuid = ?", [uuid]);
 
     return result.rowsAffected > 0; // Devuelve true si se actualizó
+}
+
+export async function db_verifyCSRFToken(uuid, csrfToken) {
+  // console.log("-----Verificando token CSRF en DB-----");
+  const userId = await db_getUserId(uuid);
+  if (!userId) {
+      return false;
+  }
+  const result = await db.execute("SELECT * FROM csrf_tokens WHERE user_id = ? AND csrf_token = ? AND revoked = 0", [userId, csrfToken]);
+  // console.log("Resultado de la verificación del token CSRF:", result);
+  return result.rows.length > 0; // Devuelve true si se encontró un token válido
 }
 
 async function db_checkUserExists(uuid) {

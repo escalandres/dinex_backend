@@ -31,8 +31,9 @@ export interface JWTPayload {
         country: object;
         email_verified: boolean;
     };
+    iat?: number; // issued at as a timestamp
+    exp?: number; // expiration time as a timestamp
     purpose: string;
-    issuedAt: number; // timestamp of token issuance
 }
 
 export interface JWTPayloadVerify {
