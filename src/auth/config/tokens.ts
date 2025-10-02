@@ -15,9 +15,7 @@ const VERIFY_EMAIL_SECRET = process.env.VERIFY_EMAIL_SECRET as string;
 
 export const generateCSRFToken = async (userId, jti) => {
     const csrfToken = crypto.randomBytes(32).toString('hex');
-    consoleLog("Generated CSRF Token:", csrfToken);
-    consoleLog("User ID for CSRF Token:", userId);
-    consoleLog("JTI for CSRF Token:", jti);
+
     await db.execute({
         sql: `
         INSERT INTO csrf_tokens (csrf_token, user_id, jti, created_at, expires_at, revoked)
@@ -85,16 +83,11 @@ export const createAuthTokens = async (userData) => {
 };
 
 export const verifyCSRFToken = async (csrfToken, uuid) => {
-    // console.log("-----Verificando token CSRF-----");
-    // console.log("CSRF Token:", csrfToken);
-    // console.log("User UUID:", uuid);
     const isCSRFValid = await db_verifyCSRFToken(uuid, csrfToken);
     return isCSRFValid;
 }
 
 const getAccessTokenFromHeader = (req) => {
-    // console.log("-----Obteniendo token de acceso-----");
-    // console.log("Request Headers:", req.headers);
     const authHeader = req.headers['authorization'];
     if (!authHeader) return null;
     const token = authHeader.split(' ')[1];
@@ -120,7 +113,7 @@ export const verifyAccessToken = async (req) => {
             return '';
         }
         const isCSRFValid = await verifyCSRFToken(csrfToken, decoded.user.uuid);
-        // console.log("isCSRFValid:", isCSRFValid);
+
         if (!isCSRFValid) {
             console.error('Token CSRF inválido');
             return '';

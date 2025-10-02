@@ -166,13 +166,12 @@ export async function db_verifyUserEmail(uuid) {
 }
 
 export async function db_verifyCSRFToken(uuid, csrfToken) {
-  // console.log("-----Verificando token CSRF en DB-----");
   const userId = await db_getUserId(uuid);
   if (!userId) {
       return false;
   }
   const result = await db.execute("SELECT * FROM csrf_tokens WHERE user_id = ? AND csrf_token = ? AND revoked = 0", [userId, csrfToken]);
-  // console.log("Resultado de la verificación del token CSRF:", result);
+
   return result.rows.length > 0; // Devuelve true si se encontró un token válido
 }
 

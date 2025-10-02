@@ -7,12 +7,11 @@ import { verifyAccessToken } from '@src/auth/config/tokens.js';
 import { InstrumentData, InstrumentDeleteData } from "@src/validators/types.js";
 import { db_getUserId } from "@services/user.js";
 import { db_instrument_catalogs } from "@services/catalogs.js";
-import { de } from "zod/locales";
 
 async function getInstrumentCatalogs() {
     try {
         const catalogs = await db_instrument_catalogs();
-        // console.log("Catálogos de instrumentos obtenidos:", catalogs);
+
         return catalogs;
     } catch (error) {
         console.error("Error al consultar el catálogo de instrumentos:", error);
@@ -29,7 +28,7 @@ export async function getUserInstruments(req: Request, res: Response): Promise<R
         }
 
         const userInstruments = await db_getUserInstruments(decodedToken.user.uuid);
-        console.log("Instrumentos del usuario obtenidos:", userInstruments);
+
         const instrumentCatalogs = await getInstrumentCatalogs();
 
         return res.status(200).json({ userInstruments, instrumentCatalogs });
@@ -41,7 +40,6 @@ export async function getUserInstruments(req: Request, res: Response): Promise<R
 
 export async function registerInstrument(req: Request, res: Response): Promise<Response> {
     try {
-        console.log("-----Registrando instrumento-----");
         const decodedToken = await verifyAccessToken(req) as JWTPayload;
 
         if (!decodedToken) {
@@ -81,7 +79,7 @@ export async function registerInstrument(req: Request, res: Response): Promise<R
             payment_due_day: payment_due_day,
             currency: currency
         }
-        console.log("Instrument data to register:", instrument);
+
         const response = await db_registerInstrument(instrument);
         if (!response) {
             console.error("Error al registrar instrumento");
