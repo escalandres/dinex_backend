@@ -43,3 +43,17 @@ export async function db_instrument_catalogs() {
         currencies: currencies.currencies.length > 0 ? currencies.currencies : []
     };
 }
+
+export async function db_incomes_catalogs() {
+    // Get income sources and frequencies catalogs
+    let incomeSources = await db.execute("SELECT * FROM income_sources_catalog");
+    let incomeFrequencies = await db.execute("SELECT * FROM frequency_catalog");
+    let currencies = await db_getCurrencies();
+    // console.log("Cat Tipo Instrumentos:", instrumentTypes.rows);
+    // console.log("Cat Subtipo Instrumentos:", instrumentSubtypes.rows);
+    return {
+        incomeSources: incomeSources.rows.length > 0 ? incomeSources.rows : [],
+        incomeFrequencies: incomeFrequencies.rows.length > 0 ? incomeFrequencies.rows : [],
+        currencies: currencies.currencies.length > 0 ? currencies.currencies : []
+    };
+}

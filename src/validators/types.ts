@@ -9,6 +9,7 @@ import {
 } from './user';
 
 import { instrumentDeleteValidator, instrumentValidator } from './instruments';
+import { incomeDeleteValidator, incomeValidator } from './incomes';
 
 // TypeScript types inferred from Validators
 export type SignupData = z.infer<typeof signupValidator>;
@@ -20,3 +21,6 @@ export type FileData = z.infer<typeof fileValidator>;
 
 export type InstrumentData = z.infer<typeof instrumentValidator>;
 export type InstrumentDeleteData = z.infer<typeof instrumentDeleteValidator>;
+
+export type IncomeData = z.infer<typeof incomeValidator>;
+export type IncomeDeleteData = z.infer<typeof incomeDeleteValidator>;
