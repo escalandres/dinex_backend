@@ -1,5 +1,5 @@
 import express from 'express';
-import { validateBody, validateParams, validateQuery, validateHeader } from '@src/middlewares/requests.js';
+import { validateBody, validateHeader } from '@src/middlewares/requests.js';
 import { instrumentsValidators } from '@validators/instruments.js';
 import { getUserInstruments, registerInstrument } from '@controllers/instruments.js';
 

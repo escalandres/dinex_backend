@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { JWTPayload, JWTPayloadVerify } from '@interfaces/user';
 import { instrumentDeleteValidator, instrumentValidator } from "@src/validators/instruments.js";
 import { db_registerInstrument, db_updateInstrument, db_getUserInstruments, db_deleteInstrument } from "../services/instruments.js";
-import { Instrument } from "@src/interfaces/instruments.js";
+import { Instrument } from "@src/interfaces/instruments.ts";
 import { verifyAccessToken } from '@src/auth/config/tokens.js';
 import { InstrumentData, InstrumentDeleteData } from "@src/validators/types.js";
 import { db_getUserId } from "@services/user.js";
@@ -14,8 +14,8 @@ async function getInstrumentCatalogs() {
 
         return catalogs;
     } catch (error) {
-        console.error("Error al consultar el catálogo de instrumentos:", error);
-        throw new Error("Error al consultar el catálogo de instrumentos");
+        console.error("Error on getInstrumentCatalogs:", error);
+        throw new Error("Error on getInstrumentCatalogs");
     }
 }
 
