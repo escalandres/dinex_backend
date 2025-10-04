@@ -12,6 +12,7 @@ const app: Application = express();
 import userRoutes from '@routes/user.ts';
 import investmentsRoute from '@routes/investments.ts';
 import instrumentsRoute from '@routes/instruments.ts';
+import incomesRoute from '@routes/incomes.ts';
 import catalogsRoute from '@routes/catalogs.ts';
 
 // -------------- Settings --------------
@@ -99,6 +100,7 @@ app.get('/paises/icon', async (req: Request, res: Response) => {
 app.use('/users', userRoutes);
 app.use('/investments', investmentsRoute);
 app.use('/instruments', instrumentsRoute);
+app.use('/incomes', incomesRoute);
 app.use('/catalogs', catalogsRoute);
 
 // Start server
