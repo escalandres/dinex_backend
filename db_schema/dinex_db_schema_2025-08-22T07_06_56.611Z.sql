@@ -237,3 +237,13 @@ CREATE TABLE IF NOT EXISTS "csrf_tokens" (
 	"revoked" BOOLEAN DEFAULT 0,
 	FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS "credit_cards_info" (
+	"id" INTEGER PRIMARY KEY,
+	"instrument_id" INTEGER NOT NULL,
+	"cut_off_day" INTEGER NOT NULL CHECK (cut_off_day BETWEEN 1 AND 31),
+	"payment_due_day" INTEGER NOT NULL CHECK (payment_due_day BETWEEN 1 AND 31),
+	"credit_limit" NUMERIC NOT NULL,
+	"current_balance" NUMERIC NOT NULL,
+	FOREIGN KEY ("instrument_id") REFERENCES "instruments"("id")
+);
