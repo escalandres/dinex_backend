@@ -56,6 +56,7 @@ export const validateBody = <T>(schema: z.ZodSchema<T>) => {
 
 // Middleware para headers - versión simplificada
 export const validateHeader = <T>(schema: z.ZodSchema<T>) => {
+    console.log("Creating header validation middleware");
     return (req: Request, res: Response, next: NextFunction) => {
         try {
             // Normalizar headers: convertir a objeto plano con claves en minúsculas

@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { JWTPayload, JWTPayloadVerify } from '@interfaces/user';
 import { instrumentDeleteValidator, instrumentValidator } from "@src/validators/instruments.js";
-import { db_registerInstrument, db_updateInstrument, db_getUserInstruments, db_deleteInstrument } from "../services/instruments.js";
+import { db_registerInstrument, db_updateInstrument, db_getUserInstruments, db_deleteInstrument, db_insertCreditCardDetails } from "../services/instruments.js";
 import { Instrument } from "@src/interfaces/instruments.ts";
 import { verifyAccessToken } from '@src/auth/config/tokens.js';
 import { InstrumentData, InstrumentDeleteData } from "@src/validators/types.js";
@@ -21,6 +21,7 @@ async function getInstrumentCatalogs() {
 
 export async function getUserInstruments(req: Request, res: Response): Promise<Response>{
     try {
+        console.log("Getting user instruments...");
         const decodedToken = await verifyAccessToken(req) as JWTPayload;
         
         if (!decodedToken) {
@@ -62,7 +63,7 @@ export async function registerInstrument(req: Request, res: Response): Promise<R
             });
         }
         console.log("Validation result:", validationResult.data);
-        const { description, type, subtype, cut_off_day, payment_due_day, currency }: InstrumentData = validationResult.data;
+        const { description, type, subtype, currency }: InstrumentData = validationResult.data;
 
         const userId = await db_getUserId(decodedToken.user.uuid);
         if (!userId) {
@@ -75,8 +76,6 @@ export async function registerInstrument(req: Request, res: Response): Promise<R
             description: description,
             type: type,
             subtype: subtype,
-            cut_off_day: cut_off_day,
-            payment_due_day: payment_due_day,
             currency: currency
         }
 
@@ -84,6 +83,18 @@ export async function registerInstrument(req: Request, res: Response): Promise<R
         if (!response) {
             console.error("Error al registrar instrumento");
             return res.status(404).json({ success: false, message: "Error al registrar instrumento" });
+        }
+
+        if(type === 2 && subtype === 4){ // Si es tarjeta de crédito, insertar detalles adicionales
+            let creditCardDetails = {
+                instrument_id: response,
+                cut_off_day: req.body.cut_off_day,
+                payment_due_day: req.body.payment_due_day,
+                credit_limit: req.body.credit_limit,
+                current_balance: req.body.current_balance
+            };
+
+            await db_insertCreditCardDetails(creditCardDetails);
         }
 
         return res

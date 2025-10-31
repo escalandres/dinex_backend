@@ -93,3 +93,7 @@ export function setPadding(
         return text + padChar.repeat(missing).substring(0, missing);
     }
 }
+
+export const generateCurrentISODate = (): string => {
+    return new Date().toISOString().split('.')[0] + 'Z'
+}

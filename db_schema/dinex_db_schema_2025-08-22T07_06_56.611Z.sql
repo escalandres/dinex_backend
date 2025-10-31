@@ -79,7 +79,8 @@ CREATE TABLE IF NOT EXISTS "users" (
 	"oauth_provider" TEXT NOT NULL DEFAULT '''''',
 	"oauth_user_id" TEXT NOT NULL DEFAULT '''''',
 	"email_verified" BOOLEAN NOT NULL,
-	"created_date" TEXT NOT NULL,
+	"created_at" TEXT NOT NULL,
+	"updated_at" TEXT NOT NULL DEFAULT (datetime('now')),
 	"last_login" TEXT NOT NULL,
 	FOREIGN KEY ("country") REFERENCES "countries"("country_id")
 	ON UPDATE NO ACTION ON DELETE NO ACTION
@@ -108,9 +109,9 @@ CREATE TABLE IF NOT EXISTS "instruments" (
 	"description" TEXT NOT NULL,
 	"type" INTEGER NOT NULL,
 	"subtype" INTEGER NOT NULL,
-	"cut_off_day" INTEGER NOT NULL,
-	"payment_due_day" INTEGER NOT NULL,
 	"currency" TEXT NOT NULL,
+	"created_at" TEXT NOT NULL DEFAULT (datetime('now')),
+	"updated_at" TEXT NOT NULL DEFAULT (datetime('now')),
 	PRIMARY KEY("id"),
 	FOREIGN KEY ("user_id") REFERENCES "users"("id")
 	ON UPDATE NO ACTION ON DELETE NO ACTION
@@ -130,6 +131,8 @@ CREATE TABLE IF NOT EXISTS "expenses" (
 	"registration_date" TEXT,
 	"comment" TEXT DEFAULT '''''',
 	"category" INTEGER,
+	"created_at" TEXT NOT NULL DEFAULT (datetime('now')),
+	"updated_at" TEXT NOT NULL DEFAULT (datetime('now')),
 	PRIMARY KEY("id"),
 	FOREIGN KEY ("frequency") REFERENCES "frequency_catalog"("id")
 	ON UPDATE NO ACTION ON DELETE NO ACTION,
@@ -155,6 +158,8 @@ CREATE TABLE IF NOT EXISTS "savings" (
 	"rate" NUMERIC NOT NULL,
 	"comment" TEXT DEFAULT '''''',
 	"year_composition" INTEGER DEFAULT 360,
+	"created_at" TEXT NOT NULL DEFAULT (datetime('now')),
+	"updated_at" TEXT NOT NULL DEFAULT (datetime('now')),
 	PRIMARY KEY("id"),
 	FOREIGN KEY ("user_id") REFERENCES "users"("id")
 		ON UPDATE NO ACTION ON DELETE NO ACTION,
@@ -174,6 +179,8 @@ CREATE TABLE IF NOT EXISTS "incomes" (
 	"frequency" INTEGER NOT NULL,
 	"registration_date" TEXT,
 	"application_date" TEXT,
+	"created_at" TEXT NOT NULL DEFAULT (datetime('now')),
+	"updated_at" TEXT NOT NULL DEFAULT (datetime('now')),
 	PRIMARY KEY("id"),
 	FOREIGN KEY ("user_id") REFERENCES "users"("id")
 	ON UPDATE NO ACTION ON DELETE NO ACTION,
@@ -194,6 +201,8 @@ CREATE TABLE IF NOT EXISTS "investments" (
 	"exchange_rate" NUMERIC,
 	"investment_date" TEXT,
 	"registration_date" TEXT,
+	"created_at" TEXT NOT NULL DEFAULT (datetime('now')),
+	"updated_at" TEXT NOT NULL DEFAULT (datetime('now')),
 	PRIMARY KEY("id"),
 	FOREIGN KEY ("investment_type") REFERENCES "investments_types_catalog"("id")
 		ON UPDATE NO ACTION ON DELETE NO ACTION,
@@ -245,5 +254,7 @@ CREATE TABLE IF NOT EXISTS "credit_cards_info" (
 	"payment_due_day" INTEGER NOT NULL CHECK (payment_due_day BETWEEN 1 AND 31),
 	"credit_limit" NUMERIC NOT NULL,
 	"current_balance" NUMERIC NOT NULL,
+	"created_at" TEXT NOT NULL DEFAULT (datetime('now')),
+	"updated_at" TEXT NOT NULL DEFAULT (datetime('now')),
 	FOREIGN KEY ("instrument_id") REFERENCES "instruments"("id")
 );

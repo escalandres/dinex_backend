@@ -1,21 +1,38 @@
 import db from './db.js';
 import { db_getUserId } from './user.js';
+import { generateCurrentISODate } from '@utils/helpers.js';
 
 export async function db_registerInstrument(instrumentData) {
-    await db.execute({
+    const result = await db.execute({
         sql: `
-        INSERT INTO instruments (user_id, description, type, subtype, cut_off_day, payment_due_day, currency)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO instruments (user_id, description, type, subtype, currency, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
         `,
         args: [
             instrumentData.user_id,
             instrumentData.description,
             instrumentData.type,
             instrumentData.subtype,
-            instrumentData.cut_off_day,
-            instrumentData.payment_due_day,
-            instrumentData.currency
+            instrumentData.currency,
+            generateCurrentISODate()
         ]
+    });
+    const newInstrumentId = result.lastInsertRowid;
+    return newInstrumentId;
+}
+
+export async function db_insertCreditCardDetails(creditCardData) {
+    await db.execute({
+        sql: `
+        INSERT INTO credit_card_details (instrument_id, cut_off_day, payment_due_day, credit_limit, current_balance, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+        `,
+        args: [creditCardData.instrument_id, 
+            creditCardData.cut_off_day, 
+            creditCardData.payment_due_day, 
+            creditCardData.credit_limit, 
+            creditCardData.current_balance, 
+            generateCurrentISODate()]
     });
     return true;
 }
@@ -51,7 +68,7 @@ export async function db_getUserInstruments(uuid) {
     if (!userId) {
         return [];
     }
-    const instruments = await db.execute("SELECT id, description, type, subtype, cut_off_day, payment_due_day, currency FROM instruments WHERE user_id = ?", [userId]);
+    const instruments = await db.execute("SELECT id, description, type, subtype, currency FROM instruments WHERE user_id = ?", [userId]);
     // console.log("Instrumentos:", instruments.rows);
 
     return instruments.rows.length > 0 ? instruments.rows : [];

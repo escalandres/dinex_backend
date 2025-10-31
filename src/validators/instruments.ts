@@ -19,21 +19,31 @@ export const instrumentValidator = z.object({
         .min(1, "Subtype is required")
         .int("Subtype must be an integer")
         .positive("Subtype must be a positive number"),
-    
-    cut_off_day: z.number()
-        .int("Cut off day must be an integer")
-        .min(1, "Cut off day must be at least 1")
-        .max(31, "Cut off day must be less than or equal to 31"),
-
-    payment_due_day: z.number()
-        .int("Payment due day must be an integer")
-        .min(1, "Payment due day must be at least 1")
-        .max(31, "Payment due day must be less than or equal to 31"),
 
     currency: z.string()
         .min(1, "Currency is required")
         .max(3, "Currency must be less than or equal to 3 characters")
         .transform(val => val.toLocaleUpperCase().trim()),
+
+    cut_off_day: z.number()
+        .int("Cut off day must be an integer")
+        .min(1, "Cut off day must be at least 1")
+        .max(31, "Cut off day must be less than or equal to 31")
+        .optional(),
+
+    payment_due_day: z.number()
+        .int("Payment due day must be an integer")
+        .min(1, "Payment due day must be at least 1")
+        .max(31, "Payment due day must be less than or equal to 31")
+        .optional(),
+
+    credit_limit: z.number()
+        .min(0, "Credit limit must be at least 0")
+        .optional(),
+
+    current_balance: z.number()
+        .min(0, "Current balance must be at least 0")
+        .optional(),
 });
 
 export const instrumentDeleteValidator = z.object({
