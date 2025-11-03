@@ -41,6 +41,8 @@ export async function getUserInstruments(req: Request, res: Response): Promise<R
 
 export async function registerInstrument(req: Request, res: Response): Promise<Response> {
     try {
+        console.log("Registering instrument...");
+        console.log("Request body:", req.body);
         const decodedToken = await verifyAccessToken(req) as JWTPayload;
 
         if (!decodedToken) {

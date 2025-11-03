@@ -97,3 +97,54 @@ export function setPadding(
 export const generateCurrentISODate = (): string => {
     return new Date().toISOString().split('.')[0] + 'Z'
 }
+
+async function fetchExchangeRates(baseCurrency: string): Promise<Record<string, number>> {
+    const res = await fetch(`https://open.er-api.com/v6/latest/${baseCurrency}`);
+    const data = await res.json();
+    if (data.result !== "success") throw new Error("Error al obtener tasas de cambio");
+    return data.rates;
+}
+
+type Income = {
+    amount: number;
+    currency: string;
+};
+
+export async function convertAmountToBaseCurrency(
+    baseCurrency: string,
+    amount: number, 
+    targetCurrency: string
+): Promise<number> {
+    if (baseCurrency === targetCurrency) return amount;
+    const rates = await fetchExchangeRates(baseCurrency);
+    const rate = rates[targetCurrency];
+    if (!rate) return amount;
+    let convertedAmount = amount / rate;
+    return parseFloat(convertedAmount.toFixed(2));
+}
+
+export async function convertIncomesToBaseCurrency(
+    baseCurrency: string,
+    incomes: Income[]
+): Promise<Income[]> {
+    const rates = await fetchExchangeRates(baseCurrency);
+
+    return incomes.map((income) => {
+        if (income.currency === baseCurrency) return income;
+
+        const rate = rates[income.currency];
+        if (!rate) throw new Error(`No hay tasa para ${income.currency}`);
+
+        const convertedAmount = income.amount / rate;
+        return {
+        amount: parseFloat(convertedAmount.toFixed(2)),
+        currency: baseCurrency,
+        };
+    });
+}
+
+function parseAmount(value: unknown): number {
+  const num = Number(value);
+  if (isNaN(num)) throw new Error(`Monto inválido: ${value}`);
+  return num;
+}

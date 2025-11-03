@@ -19,3 +19,22 @@ INSERT INTO countries (
 (15, 'Japón', 'JP', 'Yen japonés', '¥', 'JPY', '¥#,##0', 'jp.svg', 'ja'),
 (16, 'Rusia', 'RU', 'Rublo ruso', '₽', 'RUB', '₽#,##0.00', 'ru.svg', 'ru'),
 (17, 'China', 'CN', 'Yuan chino', '¥', 'CNY', '¥#,##0.00', 'cn.svg', 'zh');
+
+
+UPDATE countries SET timezone = 'America/Mexico_City' WHERE name = 'México';
+UPDATE countries SET timezone = 'America/Toronto' WHERE name = 'Canadá';
+UPDATE countries SET timezone = 'America/New_York' WHERE name = 'Estados Unidos';
+UPDATE countries SET timezone = 'America/Caracas' WHERE name = 'Venezuela';
+UPDATE countries SET timezone = 'America/Bogota' WHERE name = 'Colombia';
+UPDATE countries SET timezone = 'America/Lima' WHERE name = 'Perú';
+UPDATE countries SET timezone = 'America/Santiago' WHERE name = 'Chile';
+UPDATE countries SET timezone = 'America/Guayaquil' WHERE name = 'Ecuador';
+UPDATE countries SET timezone = 'America/Santo_Domingo' WHERE name = 'República Dominicana';
+UPDATE countries SET timezone = 'America/Argentina/Buenos_Aires' WHERE name = 'Argentina';
+UPDATE countries SET timezone = 'America/Sao_Paulo' WHERE name = 'Brasil';
+UPDATE countries SET timezone = 'Europe/Madrid' WHERE name = 'España';
+UPDATE countries SET timezone = 'Europe/Berlin' WHERE name = 'Alemania';
+UPDATE countries SET timezone = 'Europe/London' WHERE name = 'Reino Unido';
+UPDATE countries SET timezone = 'Asia/Tokyo' WHERE name = 'Japón';
+UPDATE countries SET timezone = 'Europe/Moscow' WHERE name = 'Rusia';
+UPDATE countries SET timezone = 'Asia/Shanghai' WHERE name = 'China';

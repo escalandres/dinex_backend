@@ -1,3 +1,4 @@
+import { application } from 'express';
 import { z } from 'zod';
 // Validator for registration
 export const incomeValidator = z.object({
@@ -17,7 +18,6 @@ export const incomeValidator = z.object({
 
     amount: z.number()
         .min(1, "Amount is required")
-        .int("Amount must be an integer")
         .positive("Amount must be a positive number"),
 
     currency: z.string()
@@ -29,6 +29,11 @@ export const incomeValidator = z.object({
         .min(1, "Frequency is required")
         .int("Frequency must be an integer")
         .positive("Frequency must be a positive number"),
+
+    application_date: z.string()
+        .refine((dateStr) => !isNaN(Date.parse(dateStr)), {
+            message: "Application date must be a valid date string",
+        })
 });
 
 export const incomeDeleteValidator = z.object({

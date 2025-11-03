@@ -28,7 +28,16 @@ export interface JWTPayload {
         name: string;
         lastname: string;
         profile_picture?: string;
-        country: object;
+        country: {
+            id: number;
+            currency: string;
+            currency_code: string;
+            currency_symbol: string;
+            currency_format: string;
+            timezone: string;
+            flag_icon: string;
+            language_code: string;
+        };
         email_verified: boolean;
     };
     iat?: number; // issued at as a timestamp

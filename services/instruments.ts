@@ -24,7 +24,7 @@ export async function db_registerInstrument(instrumentData) {
 export async function db_insertCreditCardDetails(creditCardData) {
     await db.execute({
         sql: `
-        INSERT INTO credit_card_details (instrument_id, cut_off_day, payment_due_day, credit_limit, current_balance, created_at)
+        INSERT INTO credit_cards_details (instrument_id, cut_off_day, payment_due_day, credit_limit, current_balance, created_at)
         VALUES (?, ?, ?, ?, ?, ?)
         `,
         args: [creditCardData.instrument_id, 

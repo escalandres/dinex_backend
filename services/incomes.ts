@@ -15,7 +15,7 @@ export async function db_registerIncome(incomeData) {
             incomeData.currency,
             incomeData.frequency,
             new Date().toISOString().split('.')[0] + 'Z',
-            new Date().toISOString().split('.')[0] + 'Z'
+            incomeData.application_date
         ]
     });
     return true;

@@ -7,6 +7,7 @@ import { verifyAccessToken } from '@src/auth/config/tokens.js';
 import { IncomeData, IncomeDeleteData } from "@src/validators/types.js";
 import { db_getUserId } from "@services/user.js";
 import { db_incomes_catalogs } from "@services/catalogs.js";
+import { convertAmountToBaseCurrency } from "@utils/helpers.js";
 
 async function getIncomeCatalogs() {
     try {
@@ -27,9 +28,19 @@ export async function getUserIncomes(req: Request, res: Response): Promise<Respo
             return res.status(401).json({ success: false, message: "Token no proporcionado o es incorrecto" });
         }
 
-        const userIncomes = await db_getUserIncomes(decodedToken.user.uuid);
+        let userIncomes = await db_getUserIncomes(decodedToken.user.uuid);
 
         const incomesCatalogs = await getIncomeCatalogs();
+
+        userIncomes = await Promise.all(userIncomes.map(async (income) => {
+
+            const convertedAmount = await convertAmountToBaseCurrency(decodedToken.user.country.currency_code, Number(income.amount), String(income.currency));
+
+            return {
+                ...income,
+                amount_converted: convertedAmount
+            };
+        }));
 
         return res.status(200).json({ userIncomes, incomesCatalogs });
     } catch (error) {
@@ -62,7 +73,7 @@ export async function registerIncome(req: Request, res: Response): Promise<Respo
             });
         }
         console.log("Validation result:", validationResult.data);
-        const { source, description, amount, frequency, currency }: IncomeData = validationResult.data;
+        const { source, description, amount, frequency, currency, application_date }: IncomeData = validationResult.data;
 
         const userId = await db_getUserId(decodedToken.user.uuid);
         if (!userId) {
@@ -76,7 +87,8 @@ export async function registerIncome(req: Request, res: Response): Promise<Respo
             source: source,
             amount: amount,
             frequency: frequency,
-            currency: currency
+            currency: currency,
+            application_date: application_date
         }
 
         const response = await db_registerIncome(Income);

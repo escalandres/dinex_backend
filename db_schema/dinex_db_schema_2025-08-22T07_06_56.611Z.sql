@@ -64,6 +64,7 @@ CREATE TABLE IF NOT EXISTS "countries" (
 	"currency_format" TEXT,
 	"flag_icon" TEXT,
 	"language_code" TEXT,
+	"timezone" TEXT NOT NULL DEFAULT 'UTC',
 	PRIMARY KEY("id")
 );
 
@@ -247,7 +248,7 @@ CREATE TABLE IF NOT EXISTS "csrf_tokens" (
 	FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS "credit_cards_info" (
+CREATE TABLE IF NOT EXISTS "credit_cards_details" (
 	"id" INTEGER PRIMARY KEY,
 	"instrument_id" INTEGER NOT NULL,
 	"cut_off_day" INTEGER NOT NULL CHECK (cut_off_day BETWEEN 1 AND 31),
