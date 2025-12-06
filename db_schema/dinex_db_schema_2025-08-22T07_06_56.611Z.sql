@@ -259,3 +259,17 @@ CREATE TABLE IF NOT EXISTS "credit_cards_details" (
 	"updated_at" TEXT NOT NULL DEFAULT (datetime('now')),
 	FOREIGN KEY ("instrument_id") REFERENCES "instruments"("id")
 );
+
+CREATE TABLE IF NOT EXISTS "saving_account_details" (
+	"id" INTEGER PRIMARY KEY,
+	"instrument_id" INTEGER NOT NULL,
+	"balance" NUMERIC NOT NULL,
+	"description" TEXT NOT NULL,
+	"interest_rate" NUMERIC NOT NULL,
+	"annual_compounding" INTEGER NOT NULL DEFAULT (360),
+	"is_frozen" BOOLEAN NOT NULL DEFAULT (0),
+	"terms" INTEGER NOT NULL,
+	"created_at" TEXT NOT NULL DEFAULT (datetime('now')),
+	"updated_at" TEXT NOT NULL DEFAULT (datetime('now')),
+	FOREIGN KEY ("instrument_id") REFERENCES "instruments"("id")
+);
